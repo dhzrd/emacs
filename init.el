@@ -1,4 +1,4 @@
-;;; Startup
+;;; GUI
 
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
@@ -20,14 +20,16 @@
   :config 
   (minions-mode 1))
 
+;;; Org-mode
 
 (use-package org
   :delight org-mode "org-mode")
 
 ;;; MacOS modkeys
+
 (when (eq system-type 'darwin)
   (setq mac-command-modifier 'meta
-	mac-left-option-modifier 'super
+	mac-option-modifier 'super
 	mac-function-modifier 'hyper
 	mac-right-option-modifier nil))
 
@@ -53,6 +55,17 @@
 ;;   (load-theme 'modus-operandi-tinted)
 
 ;;   (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
+
+;;; Completion
+
+(use-package vertico
+  :init
+  (vertico-mode))
+
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
 
 (use-package consult
   ;; Replace bindings. Lazily loaded by `use-package'.
@@ -161,17 +174,8 @@
   ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
 )
 
-(use-package ace-window
-  :ensure t
-  :bind ("M-o". ace-window))
-
-(use-package zoom-window
-  :ensure t
-  :bind ("C-\\" . zoom-window-zoom))	; originally toggleinput-method
-
 (use-package embark
   :ensure t
-
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
    ("C-;" . embark-dwim)        ;; good alternative: M-.
@@ -204,14 +208,15 @@
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
-(use-package vertico
-  :init
-  (vertico-mode))
+;;; Window management
 
-;; Persist history over Emacs restarts. Vertico sorts by history position.
-(use-package savehist
-  :init
-  (savehist-mode))
+(use-package ace-window
+  :ensure t
+  :bind ("M-o". ace-window))
+
+(use-package zoom-window
+  :ensure t
+  :bind ("C-\\" . zoom-window-zoom))	; originally toggleinput-method
 
 ;; Optionally use the `orderless' completion style.
 (use-package orderless
@@ -316,11 +321,6 @@
  org-agenda-current-time-string
  "◀── now ─────────────────────────────────────────────────")
 
-;; Ellipsis styling
-;; (setq org-ellipsis "…")
-;; (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
-
-
 (with-eval-after-load 'org (global-org-modern-mode))
 
 ;; org-appear conflicts with org-modern
@@ -332,6 +332,8 @@
   (set-face-attribute 'default nil :font "Akkurat Mono"))
 
 (global-visual-line-mode 1)
+
+;;; Version control
 
 (use-package magit
   :bind (("C-x g" . magit-status)
@@ -345,7 +347,7 @@
     (if (bound-and-true-p display-line-numbers-mode)
 	(display-line-numbers-mode -1)
       (display-line-numbers-mode)))
-  :bind (("C-z" . prot/toggle-line-numbers)))
+  :bind (("H-z" . prot/toggle-line-numbers)))
 
 ;; (use-package simple-modeline
 ;;   :hook (after-init . simple-modeline-mode)
@@ -367,6 +369,8 @@
 
 (use-package transient)
 
+;;; Python
+
 (use-package py-vterm-interaction
   :hook (python-mode . py-vterm-interaction-mode)
   :config
@@ -377,7 +381,7 @@
 
 (use-package casual-dired
   :commands casual-dired-tmenu
-  :bind (:map dired-mode-map ("C-o" . #'casual-dired-tmenu)))
+  :bind (:map dired-mode-map ("C-z d h" . #'casual-dired-tmenu)))
 
 ;; (use-package tabspaces
 ;;   :hook (after-init . tabspaces-mode) ;; use this only if you want the minor-mode loaded at startup. 
@@ -425,11 +429,6 @@
    ("C-x C-a b" . activities-switch-buffer)
    ("C-x C-a g" . activities-revert)
    ("C-x C-a l" . activities-list)))
-
-;; (use-package goggles
-;;   :hook ((prog-mode text-mode) . goggles-mode)
-;;   :config
-;;   (setq-default goggles-pulse t)) ;; set to nil to disable pulsing
 
 (use-package expand-region
   :bind ("C-=" . er/expand-region))
