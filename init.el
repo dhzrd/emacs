@@ -6,15 +6,22 @@
 	  ("nongnu" . "https://elpa.nongnu.org/nongnu/")
 	  ("melpa" . "https://melpa.org/packages/")))
 
-(when (eq system-type 'darwin)
-  (set-face-attribute 'default nil :font "Input Mono"))
+(set-face-attribute 'default nil :font "Input Mono")
+(set-face-attribute 'fixed-pitch nil :font "Input Mono" :height 1.0)
+(set-face-attribute 'variable-pitch nil :font "Input Sans" :height 1.0)
 (global-visual-line-mode 1)
+
+(use-package mixed-pitch
+  :hook
+  ;; If you want it in all text modes:
+  (text-mode . mixed-pitch-mode))
 
 (use-package org
   :delight org-mode "org-mode"		; define mode-line lighter
   :custom
   (org-startup-indented t)
-  (org-ellipsis " … ")
+  (org-ellipsis " …")
+  (set-face-underline 'org-ellipsis nil) ; remove underline from custom org-ellipsis
   (org-catch-invisible-edits 'show-and-error)
   (org-special-ctrl-a/e t)
   (org-insert-heading-respect-content t)
@@ -37,9 +44,13 @@
 
 (when (eq system-type 'darwin)
   (setq mac-command-modifier 'meta
-	mac-left-option-modifier 'super
-	mac-function-modifier 'hyper
-	mac-right-option-modifier nil))
+        mac-option-modifier 'super
+        mac-function-modifier 'hyper
+        mac-right-option-modifier nil))
+
+(use-package free-keys
+  :custom
+  (free-keys-modifiers '("" "C" "M" "C-M" "s" "H")))
 
 (use-package recentf
   :config
@@ -356,15 +367,28 @@
   :config
   (consult-denote-mode 1))
 
-(setq tab-bar-show 1)                      ;; hide bar if <= 1 tabs open
-(setq tab-bar-close-button-show nil)       ;; hide tab close / X button
-(setq tab-bar-tab-hints nil) ;; show tab numbers
-(setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator)) ;; elements to include in bar
+(use-package yasnippet
+  :ensure t
+  :config
+  (yas-global-mode 1))
+
+(use-package yasnippet-snippets
+  :ensure t
+  :after yasnippet)
+
+;; (setq tab-bar-show 1)                      ;; hide bar if <= 1 tabs open
+(customize-set-variable 'tab-bar-show nil) ; on customize-set-variable see https://emacs.stackexchange.com/a/106
+;; (setq tab-bar-close-button-show nil)       ;; hide tab close / X button
+;; (setq tab-bar-tab-hints nil) ;; show tab numbers
+;; (setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator)) ;; elements to include in bar
 
 (use-package minions
   :ensure t
   :config 
   (minions-mode 1))
+
+(use-package mode-line-bell
+  :init (mode-line-bell-mode))
 
 (use-package activities
   :init
@@ -436,3 +460,16 @@
   ;; (setq-default py-vterm-interaction-repl-program "ipython")
   ;; (setq-default py-vterm-interaction-silent-cells t)
   )
+
+(use-package pdf-tools
+ :pin manual ;; manually update
+ :mode  ("\\.pdf\\'" . pdf-view-mode)
+ :config
+ ;; initialise
+ (pdf-tools-install :no-query)
+ ;; open pdfs scaled to fit page
+ (setq-default pdf-view-display-size 'fit-width)
+ ;; automatically annotate highlights
+ (setq pdf-annot-activate-created-annotations t)
+ ;; use normal isearch
+ (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))

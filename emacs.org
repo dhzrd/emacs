@@ -1,7 +1,8 @@
 #+title: Emacs
-#+date: <2024-11-18 Mon>
+#+date: <2024-11-22 Fri>
 #+author: Daniel Hazard
-#+PROPERTY: header-args :tangle yes 
+#+PROPERTY: header-args :tangle yes
+This ~org~ file tangles to two different ~emacs-lisp~ files in the same directory: ~early-init.el~ and ~init.el~.
 * early-init.el
 :PROPERTIES:
 :header-args: :tangle early-init.el
@@ -56,20 +57,30 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
 ** Fonts and other styles
 
 #+begin_src emacs-lisp
-  (when (eq system-type 'darwin)
-    (set-face-attribute 'default nil :font "Input Mono"))
+  (set-face-attribute 'default nil :font "Input Mono")
+  (set-face-attribute 'fixed-pitch nil :font "Input Mono" :height 1.0)
+  (set-face-attribute 'variable-pitch nil :font "Input Sans" :height 1.0)
   (global-visual-line-mode 1)
+#+end_src
+
+*** mixed-pitch-mode
+
+#+begin_src emacs-lisp
+  (use-package mixed-pitch
+    :hook
+    ;; If you want it in all text modes:
+    (text-mode . mixed-pitch-mode))
 #+end_src
 
 ** org-mode
 
-Define mode-line lighter
 #+begin_src emacs-lisp
   (use-package org
     :delight org-mode "org-mode"		; define mode-line lighter
     :custom
     (org-startup-indented t)
-    (org-ellipsis "…")
+    (org-ellipsis " …")
+    (set-face-underline 'org-ellipsis nil) ; remove underline from custom org-ellipsis
     (org-catch-invisible-edits 'show-and-error)
     (org-special-ctrl-a/e t)
     (org-insert-heading-respect-content t)
@@ -103,9 +114,17 @@ Define mode-line lighter
 #+begin_src emacs-lisp
   (when (eq system-type 'darwin)
     (setq mac-command-modifier 'meta
-	  mac-left-option-modifier 'super
-	  mac-function-modifier 'hyper
-	  mac-right-option-modifier nil))
+          mac-option-modifier 'super
+          mac-function-modifier 'hyper
+          mac-right-option-modifier nil))
+#+end_src
+
+*** free-keys
+
+#+begin_src emacs-lisp
+  (use-package free-keys
+    :custom
+    (free-keys-modifiers '("" "C" "M" "C-M" "s" "H")))
 #+end_src
 
 ** Completion and the Minibuffer
@@ -410,6 +429,8 @@ Define mode-line lighter
 #+end_src
 
 ** Writing, Editing, and Navigation
+*** Better Default Commands
+**** 
 *** avy
 #+begin_src emacs-lisp
   (use-package avy
@@ -417,7 +438,6 @@ Define mode-line lighter
     :bind 
     ("s-q" . avy-goto-char))
 #+end_src
-
 *** ace-link
 
 #+begin_src emacs-lisp
@@ -457,6 +477,7 @@ Define mode-line lighter
 #+end_src
 
 *** denote
+
 #+begin_src emacs-lisp
   (use-package denote
     :ensure t
@@ -478,13 +499,27 @@ Define mode-line lighter
     (consult-denote-mode 1))
 #+end_src
 
-** Windows, Buffers, and Tabs
-*** Customizations
+*** yasnippet
+
 #+begin_src emacs-lisp
-  (setq tab-bar-show 1)                      ;; hide bar if <= 1 tabs open
-  (setq tab-bar-close-button-show nil)       ;; hide tab close / X button
-  (setq tab-bar-tab-hints nil) ;; show tab numbers
-  (setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator)) ;; elements to include in bar
+  (use-package yasnippet
+    :ensure t
+    :config
+    (yas-global-mode 1))
+
+  (use-package yasnippet-snippets
+    :ensure t
+    :after yasnippet)
+#+end_src
+
+** Windows, Buffers, and Tabs
+*** tab-bar
+#+begin_src emacs-lisp
+  ;; (setq tab-bar-show 1)                      ;; hide bar if <= 1 tabs open
+  (customize-set-variable 'tab-bar-show nil) ; on customize-set-variable see https://emacs.stackexchange.com/a/106
+  ;; (setq tab-bar-close-button-show nil)       ;; hide tab close / X button
+  ;; (setq tab-bar-tab-hints nil) ;; show tab numbers
+  ;; (setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator)) ;; elements to include in bar
 #+end_src
 
 *** mode-line
@@ -494,6 +529,12 @@ Define mode-line lighter
     :ensure t
     :config 
     (minions-mode 1))
+#+end_src
+**** mode-line-bell
+
+#+begin_src emacs-lisp
+  (use-package mode-line-bell
+    :init (mode-line-bell-mode))
 #+end_src
 
 *** activities
@@ -591,3 +632,19 @@ Define mode-line lighter
 *** treesit
 *** python
 *** racket
+** pdf-tools
+
+#+begin_src emacs-lisp
+  (use-package pdf-tools
+   :pin manual ;; manually update
+   :mode  ("\\.pdf\\'" . pdf-view-mode)
+   :config
+   ;; initialise
+   (pdf-tools-install :no-query)
+   ;; open pdfs scaled to fit page
+   (setq-default pdf-view-display-size 'fit-width)
+   ;; automatically annotate highlights
+   (setq pdf-annot-activate-created-annotations t)
+   ;; use normal isearch
+   (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+#+end_src
