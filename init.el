@@ -26,7 +26,17 @@
   (org-special-ctrl-a/e t)
   (org-insert-heading-respect-content t)
   (org-hide-emphasis-markers t)
-  (org-pretty-entities t))
+  (org-pretty-entities t)
+  :config
+
+  ;; Rebind some commands in org-mode so as to free up some key sequences (that are elsewhere defined)
+
+  (unbind-key "C-j" org-mode-map)	; originally org-return-and-maybe-indent
+  (bind-key "C-m" 'org-return-and-maybe-indent org-mode-map) ; originally (org-return) which is also available at RET
+
+  (unbind-key "C-," org-mode-map)	; originally org-cycle-agenda-files
+  (unbind-key "C-'" org-mode-map)	; originally org-cycle-agenda-files
+  (bind-key "C-<" 'org-cycle-agenda-files org-mode-map))
 
 (use-package org-modern
   :ensure t
@@ -206,8 +216,8 @@
 (use-package embark
   :ensure t
   :bind
-  (("C-." . embark-act)         ;; pick some comfortable binding
-   ("C-;" . embark-dwim)        ;; good alternative: M-.
+  (("C-'" . embark-act)
+   ("C-;" . embark-dwim)
    ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
 
   :init
@@ -228,9 +238,9 @@
 
   ;; Hide the mode line of the Embark live/completions buffers
   (add-to-list 'display-buffer-alist
-	       '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-		 nil
-		 (window-parameters (mode-line-format . none)))))
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
 
 (use-package embark-consult
   :ensure t ; only need to install it, embark loads it after consult if found
@@ -326,7 +336,7 @@
 (use-package avy
   :ensure t
   :bind 
-  ("s-q" . avy-goto-char))
+  ("C-j" . avy-goto-char))		; originally (eval-print-last-sexp)
 
 (use-package ace-link
   :ensure t
@@ -410,16 +420,16 @@
 
 (use-package popper
   :ensure t
-  :bind (("s--"   . popper-toggle)
-	 ("s-="   . popper-cycle)
-	 ("s-_" . popper-toggle-type))
+  :bind (("s-`"   . popper-toggle)
+         ("s-1"   . popper-cycle)
+         ("s-2" . popper-toggle-type))
   :init
   (setq popper-reference-buffers
-	'("\\*Messages\\*"
-	  "Output\\*$"
-	  "\\*Async Shell Command\\*"
-	  help-mode
-	  compilation-mode))
+        '("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          help-mode
+          compilation-mode))
   (popper-mode +1)
   (popper-echo-mode +1))
 
@@ -473,3 +483,10 @@
  (setq pdf-annot-activate-created-annotations t)
  ;; use normal isearch
  (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+
+(use-package info-variable-pitch
+  :ensure t
+  :hook (info-mode . info-variable-pitch-mode))
+
+(use-package olivetti
+  :ensure t)
