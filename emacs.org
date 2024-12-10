@@ -2,7 +2,9 @@
 #+date: <2024-11-22 Fri>
 #+author: Daniel Hazard
 #+PROPERTY: header-args :tangle yes
+
 This ~org~ file tangles to two different ~emacs-lisp~ files in the same directory: ~early-init.el~ and ~init.el~.
+
 * early-init.el
 :PROPERTIES:
 :header-args: :tangle early-init.el
@@ -42,8 +44,16 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
 ** no-littering
 
 #+begin_src emacs-lisp
-  (use-package no-littering)
-  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+  (use-package no-littering
+    :init
+    (eval-and-compile ; Ensure values don't differ at compile time.
+      (setq no-littering-etc-directory
+            (expand-file-name "etc/" user-emacs-directory))
+      (setq no-littering-var-directory
+            (expand-file-name "var/" user-emacs-directory)))
+    :config
+    (no-littering-theme-backups)
+    (setq custom-file (expand-file-name "custom.el" user-emacs-directory)))
 #+end_src
 
 ** package management
@@ -111,6 +121,7 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
     :hook
     (org-mode . org-modern-mode))
 #+end_src
+
 **** org-modern-indent
 
 #+begin_src emacs-lisp
@@ -122,7 +133,9 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
 ** Key-mapping and -binding
 *** Modifiers Keys on MacOS
 #+begin_src emacs-lisp
-  (when (eq system-type 'darwin)
+  (use-package ns-win
+    :when (eq system-type 'darwin)
+    :init
     (setq mac-command-modifier 'meta
           mac-option-modifier 'super
           mac-function-modifier 'hyper
@@ -158,81 +171,81 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
 *** Vertico
 #+begin_src emacs-lisp
   (use-package vertico
-    :init
-    (vertico-mode))
+    :hook ((after-init . vertico-mode)
+           (vertico-mode . vertico-multiform-mode)))
 #+end_src
 
 *** Consult
 #+begin_src emacs-lisp
   (use-package consult
-    ;; Replace bindings. Lazily loaded by `use-package'.
+    :ensure t
     :bind (;; C-c bindings in `mode-specific-map'
-	   ("C-c M-x" . consult-mode-command)
-	   ("C-c h" . consult-history)
-	   ("C-c k" . consult-kmacro)
-	   ("C-c m" . consult-man)
-	   ("C-c i" . consult-info)
-	   ([remap Info-search] . consult-info)
-	   ;; C-x bindings in `ctl-x-map'
-	   ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-	   ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-	   ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-	   ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-	   ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
-	   ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
-	   ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-	   ;; Custom M-# bindings for fast register access
-	   ("M-#" . consult-register-load)
-	   ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
-	   ("C-M-#" . consult-register)
-	   ;; Other custom bindings
-	   ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-	   ;; M-g bindings in `goto-map'
-	   ("M-g e" . consult-compile-error)
-	   ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
-	   ("M-g g" . consult-goto-line)             ;; orig. goto-line
-	   ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
-	   ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
-	   ("M-g m" . consult-mark)
-	   ("M-g k" . consult-global-mark)
-	   ("M-g i" . consult-imenu)
-	   ("M-g I" . consult-imenu-multi)
-	   ;; M-s bindings in `search-map'
-	   ("M-s d" . consult-find)                  ;; Alternative: consult-fd
-	   ("M-s c" . consult-locate)
-	   ("M-s g" . consult-grep)
-	   ("M-s G" . consult-git-grep)
-	   ("M-s r" . consult-ripgrep)
-	   ("M-s l" . consult-line)
-	   ("M-s L" . consult-line-multi)
-	   ("M-s k" . consult-keep-lines)
-	   ("M-s u" . consult-focus-lines)
-	   ;; Isearch integration
-	   ("M-s e" . consult-isearch-history)
-	   :map isearch-mode-map
-	   ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
-	   ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
-	   ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
-	   ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
-	   ;; Minibuffer history
-	   :map minibuffer-local-map
-	   ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-	   ("M-r" . consult-history)                ;; orig. previous-matching-history-element
-	   ;; Other commands
-	   ("C-x C-r" . consult-recent-file)) ;; orig. find-file-read-only
+           ("C-c M-x" . consult-mode-command)
+           ("C-c h" . consult-history)
+           ("C-c k" . consult-kmacro)
+           ("C-c m" . consult-man)
+           ("C-c i" . consult-info)
+           ([remap Info-search] . consult-info)
+           ;; C-x bindings in `ctl-x-map'
+           ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+           ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+           ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+           ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+           ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
+           ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+           ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+           ;; Custom M-# bindings for fast register access
+           ("M-#" . consult-register-load)
+           ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+           ("C-M-#" . consult-register)
+           ;; Other custom bindings
+           ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+           ;; M-g bindings in `goto-map'
+           ("M-g e" . consult-compile-error)
+           ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+           ("M-g g" . consult-goto-line)             ;; orig. goto-line
+           ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+           ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+           ("M-g m" . consult-mark)
+           ("M-g k" . consult-global-mark)
+           ("M-g i" . consult-imenu)
+           ("M-g I" . consult-imenu-multi)
+           ;; M-s bindings in `search-map'
+           ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+           ("M-s c" . consult-locate)
+           ("M-s g" . consult-grep)
+           ("M-s G" . consult-git-grep)
+           ("M-s r" . consult-ripgrep)
+           ("M-s l" . consult-line)
+           ("M-s L" . consult-line-multi)
+           ("M-s k" . consult-keep-lines)
+           ("M-s u" . consult-focus-lines)
+           ;; Isearch integration
+           ("M-s e" . consult-isearch-history)
+           :map isearch-mode-map
+           ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+           ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+           ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+           ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+           ;; Minibuffer history
+           :map minibuffer-local-map
+           ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+           ("M-r" . consult-history)                ;; orig. previous-matching-history-element
+           ;; Other commands
+           ("C-x C-r" . consult-recent-file)) ;; orig. find-file-read-only
 
-    ;; Enable automatic preview at point in the *Completions* buffer. This is
-    ;; relevant when you use the default completion UI.
-    :hook (completion-list-mode . consult-preview-at-point-mode)
+  
+    :hook
+    ;; Enable automatic preview at point in the *Completions* buffer.
+    (completion-list-mode . consult-preview-at-point-mode)
 
-    ;; The :init configuration is always executed (Not lazy)
     :init
 
     ;; Optionally configure the register formatting. This improves the register
     ;; preview for `consult-register', `consult-register-load',
     ;; `consult-register-store' and the Emacs built-ins.
     (setq register-preview-delay 0.5
-	  register-preview-function #'consult-register-format)
+          register-preview-function #'consult-register-format)
 
     ;; Optionally tweak the register preview window.
     ;; This adds thin lines, sorting and hides the mode line of the window.
@@ -240,10 +253,7 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
 
     ;; Use Consult to select xref locations with preview
     (setq xref-show-xrefs-function #'consult-xref
-	  xref-show-definitions-function #'consult-xref)
-
-    ;; Configure other variables and modes in the :config section,
-    ;; after lazily loading the package.
+          xref-show-definitions-function #'consult-xref)
     :config
 
     ;; Optionally configure preview. The default value
@@ -264,41 +274,7 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
 
     ;; Optionally configure the narrowing key.
     ;; Both < and C-+ work reasonably well.
-    (setq consult-narrow-key "<") ;; "C-+"
-
-    ;; Optionally make narrowing help available in the minibuffer.
-    ;; You may want to use `embark-prefix-help-command' or which-key instead.
-    ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
-  )
-
-  (use-package embark
-    :ensure t
-    :bind
-    (("C-." . embark-act)         ;; pick some comfortable binding
-     ("C-;" . embark-dwim)        ;; good alternative: M-.
-     ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
-
-    :init
-
-    ;; Optionally replace the key help with a completing-read interface
-    (setq prefix-help-command #'embark-prefix-help-command)
-
-    ;; Show the Embark target at point via Eldoc. You may adjust the
-    ;; Eldoc strategy, if you want to see the documentation from
-    ;; multiple providers. Beware that using this can be a little
-    ;; jarring since the message shown in the minibuffer can be more
-    ;; than one line, causing the modeline to move up and down:
-
-    ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
-    ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
-
-    :config
-
-    ;; Hide the mode line of the Embark live/completions buffers
-    (add-to-list 'display-buffer-alist
-		 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-		   nil
-		   (window-parameters (mode-line-format . none)))))
+    (setq consult-narrow-key "<"))
 #+end_src
 
 *** Embark
@@ -306,32 +282,21 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
 #+begin_src emacs-lisp
   (use-package embark
     :ensure t
+    :after vertico
     :bind
-    (("C-'" . embark-act)
-     ("C-;" . embark-dwim)
+    (("C-." . embark-act)
+     ("M-." . embark-dwim)	; originally x-ref-goto-xref
      ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
 
-    :init
-
-    ;; Optionally replace the key help with a completing-read interface
-    (setq prefix-help-command #'embark-prefix-help-command)
-
-    ;; Show the Embark target at point via Eldoc. You may adjust the
-    ;; Eldoc strategy, if you want to see the documentation from
-    ;; multiple providers. Beware that using this can be a little
-    ;; jarring since the message shown in the minibuffer can be more
-    ;; than one line, causing the modeline to move up and down:
-
-    ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
-    ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
-
     :config
-
     ;; Hide the mode line of the Embark live/completions buffers
     (add-to-list 'display-buffer-alist
                  '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                    nil
-                   (window-parameters (mode-line-format . none)))))
+                   (window-parameters (mode-line-format . none))))
+    :custom
+    ;; replace the key help with a completing-read interface
+    (prefix-help-command #'embark-prefix-help-command))
 
   (use-package embark-consult
     :ensure t ; only need to install it, embark loads it after consult if found
@@ -436,11 +401,77 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
 #+end_src
 
 *** transient
+
 #+begin_src emacs-lisp
   (use-package transient)
 #+end_src
 
+*** Templates and Snippets
+
+#+begin_src emacs-lisp
+  ;; Configure Tempel
+  (use-package tempel
+    ;; Require trigger prefix before template name when completing.
+    ;; :custom
+    ;; (tempel-trigger-prefix "<")
+
+    :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
+           ("M-*" . tempel-insert))
+
+    :init
+
+    ;; Setup completion at point
+    (defun tempel-setup-capf ()
+      ;; Add the Tempel Capf to `completion-at-point-functions'.
+      ;; `tempel-expand' only triggers on exact matches. Alternatively use
+      ;; `tempel-complete' if you want to see all matches, but then you
+      ;; should also configure `tempel-trigger-prefix', such that Tempel
+      ;; does not trigger too often when you don't expect it. NOTE: We add
+      ;; `tempel-expand' *before* the main programming mode Capf, such
+      ;; that it will be tried first.
+      (setq-local completion-at-point-functions
+                  (cons #'tempel-expand
+                        completion-at-point-functions)))
+
+    (add-hook 'conf-mode-hook 'tempel-setup-capf)
+    (add-hook 'prog-mode-hook 'tempel-setup-capf)
+    (add-hook 'text-mode-hook 'tempel-setup-capf)
+
+    ;; Optionally make the Tempel templates available to Abbrev,
+    ;; either locally or globally. `expand-abbrev' is bound to C-x '.
+    ;; (add-hook 'prog-mode-hook #'tempel-abbrev-mode)
+    ;; (global-tempel-abbrev-mode)
+  )
+
+  ;; Optional: Add tempel-collection.
+  ;; The package is young and doesn't have comprehensive coverage.
+  (use-package tempel-collection)
+#+end_src
+
 ** Writing, Editing, and Navigation
+
+#+begin_src emacs-lisp
+  ;; from http://whattheemacsd.com/editing-defuns.el-02.html
+  (defun move-line-down ()
+    (interactive)
+    (let ((col (current-column)))
+      (save-excursion
+        (forward-line)
+        (transpose-lines 1))
+      (forward-line)
+      (move-to-column col)))
+  (bind-key "C-s-<down>" 'move-line-down)
+
+  (defun move-line-up ()
+    (interactive)
+    (let ((col (current-column)))
+      (save-excursion
+        (forward-line)
+        (transpose-lines -1))
+      (move-to-column col)))
+  (bind-key "C-s-<up>" 'move-line-up)
+#+end_src
+
 *** dabbrev
 
 *** avy
@@ -450,6 +481,7 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
     :bind 
     ("C-j" . avy-goto-char))		; originally (eval-print-last-sexp)
 #+end_src
+
 *** ace-link
 
 #+begin_src emacs-lisp
@@ -557,17 +589,19 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
     (activities-tabs-mode)
     ;; Prevent `edebug' default bindings from interfering.
     (setq edebug-inhibit-emacs-lisp-mode-bindings t)
-
-    :bind
-    (("C-x C-a C-n" . activities-new)
-     ("C-x C-a C-d" . activities-define)
-     ("C-x C-a C-a" . activities-resume)
-     ("C-x C-a C-s" . activities-suspend)
-     ("C-x C-a C-k" . activities-kill)
-     ("C-x C-a RET" . activities-switch)
-     ("C-x C-a b" . activities-switch-buffer)
-     ("C-x C-a g" . activities-revert)
-     ("C-x C-a l" . activities-list)))
+    :config
+    (bind-keys :prefix-map my-activities-map
+               :prefix "s-a"
+               :prefix-docstring "Keymap for activities-mode"
+               ("s-n" . activities-new)
+               ("s-d" . activities-define)
+               ("s-a" . activities-resume)
+               ("s-s" . activities-suspend)
+               ("s-k" . activities-kill)
+               ("RET" . activities-switch)
+               ("b" . activities-switch-buffer)
+               ("g" . activities-revert)
+               ("l" . activities-list)))
 #+end_src
 
 *** popper
@@ -588,6 +622,15 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
     (popper-echo-mode +1))
 #+end_src
 
+*** windmove
+
+#+begin_src emacs-lisp :tangle no
+  (use-package windmove
+    :ensure t
+    :config
+    (windmove-default-keybindings 'super))
+#+end_src
+
 ** dired
 #+begin_src emacs-lisp
   (setq dired-dwim-target t)
@@ -604,6 +647,18 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
     :bind (:map dired-mode-map ("C-z d h" . #'casual-dired-tmenu)))
 #+end_src
 
+*** dired-x
+
+#+begin_src emacs-lisp :tangle no 
+  (use-package dired-x
+    :ensure t
+    :config
+    (dired-omit-mode 1)
+    :custom
+    (dired-omit-extensions ".DS_Store")
+    (dired-find-subdir t))
+#+end_src
+
 ** Version Control
 *** magit
 #+begin_src emacs-lisp
@@ -611,38 +666,75 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
     :bind (("C-x g" . magit-status)
 	   ("C-x C-g" . magit-status)))
 #+end_src
+
 ** Programming
 
 #+begin_src emacs-lisp
-  (use-package treesit-auto
-    :config
-    (global-treesit-auto-mode))
-
   (use-package geiser-mit 
     :ensure t
     :config
     (setq geiser-racket-binary (executable-find "Racket")))
 
-  (use-package ultra-scroll-mac
-    :if (eq window-system 'mac)
-    ;:load-path "~/code/emacs/ultra-scroll-mac" ; if you git clone'd instead of package-vc-install
-    :init
-    (setq scroll-conservatively 101 ; important!
-	  scroll-margin 0) 
-    :config
-    (ultra-scroll-mac-mode 1))
+  ;; (use-package ultra-scroll-mac
+  ;;   :if (eq window-system 'mac)
+  ;;   ;:load-path "~/code/emacs/ultra-scroll-mac" ; if you git clone'd instead of package-vc-install
+  ;;   :init
+  ;;   (setq scroll-conservatively 101 ; important!
+  ;;         scroll-margin 0) 
+  ;;   :config
+  ;;   (ultra-scroll-mac-mode 1))
 
-  (use-package py-vterm-interaction
-    :hook (python-mode . py-vterm-interaction-mode)
-    :config
-    ;;; Suggested:
-    ;; (setq-default py-vterm-interaction-repl-program "ipython")
-    ;; (setq-default py-vterm-interaction-silent-cells t)
-    )
+
+
+  ;; (use-package py-vterm-interaction
+  ;;   :hook (python-mode . py-vterm-interaction-mode)
+  ;;   :config
+  ;;   ;;; Suggested:
+  ;;   ;; (setq-default py-vterm-interaction-repl-program "ipython")
+  ;;   ;; (setq-default py-vterm-interaction-silent-cells t)
+  ;;   )
 #+end_src
 
-*** treesit
+*** tree-sitter
+
+#+begin_src emacs-lisp
+  (use-package tree-sitter
+    :ensure t)
+#+end_src
+
+**** tree-sitter-langs
+
+#+begin_src emacs-lisp
+  (use-package tree-sitter-langs
+    :ensure t
+    :after tree-sitter
+    :config
+    (tree-sitter-langs-install-grammars :skip-if-installed))
+#+end_src
+
+**** treesit-auto
+
+#+begin_src emacs-lisp
+  (use-package treesit-auto
+    :after tree-sitter
+    :custom
+    (treesit-auto-install 'prompt)
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))
+#+end_src
+
 *** python
+
+#+begin_src emacs-lisp
+  (use-package python
+    :mode ("\\.py\\'" . python-ts-mode)
+    ;; :hook (python-ts-mode (lambda () (run-hooks 'python-mode-hook)))
+    :custom
+    (python-indent-guess-indent-offset-verbose nil)
+    (python-shell-completion-native-enable nil)) ; see https://emacs.stackexchange.com/questions/30082/your-python-shell-interpreter-doesn-t-seem-to-support-readline
+#+end_src
+
 *** racket
 ** pdf-tools
 
@@ -676,4 +768,46 @@ https://github.com/kisaragi-hiu/info-variable-pitch
 #+begin_src emacs-lisp
   (use-package olivetti
     :ensure t)
+#+end_src
+
+** buffer-flip
+
+#+begin_src emacs-lisp
+  (use-package buffer-flip
+    :ensure t
+    :bind  (("M-\\" . buffer-flip)	; originally delete-horizontal-space
+            :map buffer-flip-map
+            ( "M-\\" .   buffer-flip-forward) 
+            ( "M-|" . buffer-flip-backward) ; originally shell-command-on-region
+            ( "M-ESC" .     buffer-flip-abort))
+    ;; :config
+    ;; (setq buffer-flip-skip-patterns
+    ;;       '("^\\*helm\\b"
+    ;;         "^\\*swiper\\*$"))
+    )
+#+end_src
+
+** fwb-cmds
+
+#+begin_src emacs-lisp
+  (use-package fwb-cmds
+    :ensure t
+    :bind ("s-\\" . fwb-toggle-window-split))
+#+end_src
+
+* TO-DO
+** frame commands
+*** thumb frames
+#+begin_src emacs-lisp
+  (use-package frame-fns
+    :load-path "lisp"
+    )
+
+  (use-package frame-cmds
+    :load-path "lisp"
+    )
+
+  (use-package thumb-frm
+    :load-path "lisp"
+    )
 #+end_src
