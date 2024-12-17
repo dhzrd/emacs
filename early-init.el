@@ -6,6 +6,13 @@
 (setq inhibit-startup-message t) 
 (setq initial-scratch-message nil)
 
+(when (featurep 'native-compile)
+  ;; Silence compiler warnings as they can be pretty disruptive
+  (setopt native-comp-async-report-warnings-errors nil)
+
+  ;; Make native compilation happens asynchronously
+  (setopt native-comp-deferred-compilation t))
+
 (when (and (fboundp 'startup-redirect-eln-cache)
 	   (fboundp 'native-comp-available-p)
 	   (native-comp-available-p))

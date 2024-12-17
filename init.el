@@ -9,10 +9,56 @@
   (no-littering-theme-backups)
   (setq custom-file (expand-file-name "custom.el" user-emacs-directory)))
 
+;; (use-package package
+;;   :custom package-archives
+;;         '(("gnu" . "https://elpa.gnu.org/packages/")
+;;           ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+;;           ("melpa" . "https://melpa.org/packages/")))
+
 (setopt package-archives
-	'(("gnu" . "https://elpa.gnu.org/packages/")
-	  ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-	  ("melpa" . "https://melpa.org/packages/")))
+        '(("gnu" . "https://elpa.gnu.org/packages/")
+          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+          ("melpa" . "https://melpa.org/packages/")))
+
+(use-package prog-mode
+  :hook (prog-mode . display-fill-column-indicator-mode))
+
+(use-package display-fill-column-indicator
+  :custom (display-fill-column-indicator-character nil)                                   
+  :custom-face (fill-column-indicator ((t (:height 1.0 :foreground "grey"))))
+  :hook (prog-mode . display-fill-column-indicator-mode))
+
+(use-package minions
+  :custom
+  (minions-mode-line-delimiters nil)
+  :config 
+  (minions-mode 1))
+
+(use-package mood-line
+  :after minions
+  :preface
+  (defun my/mood-line-segment-major-mode ()
+    "Return the name of the major mode of the current buffer."
+    (concat (format-mode-line minions-mode-line-modes 'mood-line-major-mode) ""))
+  :custom
+  (mood-line-glyph-alist mood-line-glyphs-unicode)
+  (mood-line-format
+   (mood-line-defformat
+    :left
+    (((mood-line-segment-buffer-status) . " ")
+     ((mood-line-segment-buffer-name)   . " : ")
+     (my/mood-line-segment-major-mode)
+     (mood-line-segment-vc)         . "  ")
+    :right
+    (((mood-line-segment-scroll)             . " ")
+     ((mood-line-segment-cursor-position)    . "  ")
+     ((when (mood-line-segment-checker) "|") . "  ")
+     ((mood-line-segment-checker)            . "  ")))
+  :config
+  (mood-line-mode)))
+
+(use-package mode-line-bell
+  :init (mode-line-bell-mode))
 
 (set-face-attribute 'default nil :font "Input Mono")
 (set-face-attribute 'fixed-pitch nil :font "Input Mono" :height 1.0)
@@ -35,19 +81,19 @@
   (org-insert-heading-respect-content t)
   (org-hide-emphasis-markers t)
   (org-pretty-entities t)
+  :hook (org-mode . visual-line-mode)
   :config
 
   ;; Rebind some commands in org-mode so as to free up some key sequences (that are elsewhere defined)
 
-  (unbind-key "C-j" org-mode-map)	; originally org-return-and-maybe-indent
-  (bind-key "C-m" 'org-return-and-maybe-indent org-mode-map) ; originally (org-return) which is also available at RET
+  ;; (unbind-key "C-j" org-mode-map)	; originally org-return-and-maybe-indent
+  ;; (bind-key "C-m" 'org-return-and-maybe-indent org-mode-map) ; originally (org-return) which is also available at RET
 
   (unbind-key "C-," org-mode-map)	; originally org-cycle-agenda-files
   (unbind-key "C-'" org-mode-map)	; originally org-cycle-agenda-files
   (bind-key "C-<" 'org-cycle-agenda-files org-mode-map))
 
 (use-package org-modern
-  :ensure t
   :custom
   (org-modern-hide-stars nil)		; adds extra indentation
   (org-modern-block-name '("" . ""))
@@ -57,16 +103,22 @@
   (org-mode . org-modern-mode))
 
 (use-package org-modern-indent
+  :after org-modern
   :config ; add late to hook
   (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
+
+(use-package org-tidy
+
+  :hook
+  (org-mode . org-tidy-mode))
 
 (use-package ns-win
   :when (eq system-type 'darwin)
   :init
-  (setq mac-command-modifier 'meta
-        mac-option-modifier 'super
-        mac-function-modifier 'hyper
-        mac-right-option-modifier nil))
+  (setopt mac-command-modifier 'meta
+          mac-option-modifier 'super
+          mac-function-modifier 'hyper
+          mac-right-option-modifier nil))
 
 (use-package free-keys
   :custom
@@ -88,7 +140,7 @@
          (vertico-mode . vertico-multiform-mode)))
 
 (use-package consult
-  :ensure t
+
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
          ("C-c h" . consult-history)
@@ -187,7 +239,7 @@
   (setq consult-narrow-key "<"))
 
 (use-package embark
-  :ensure t
+
   :after vertico
   :bind
   (("C-." . embark-act)
@@ -205,7 +257,7 @@
   (prefix-help-command #'embark-prefix-help-command))
 
 (use-package embark-consult
-  :ensure t ; only need to install it, embark loads it after consult if found
+   ; only need to install it, embark loads it after consult if found
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
@@ -218,7 +270,8 @@
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
-(use-package corfu
+(use-package corfu-
+  :bind ("s-<tab>" . corfu-expand)
   ;; Optional customizations
   ;; :custom
   ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
@@ -265,7 +318,7 @@
 (use-package dabbrev
   ;; Swap M-/ and C-M-/
   :bind (("M-/" . dabbrev-completion)
-	 ("C-M-/" . dabbrev-expand))
+         ("C-M-/" . dabbrev-expand))
   :config
   (add-to-list 'dabbrev-ignored-buffer-regexps "\\` ")
   ;; Since 29.1, use `dabbrev-ignored-buffer-regexps' on older.
@@ -274,22 +327,15 @@
   (add-to-list 'dabbrev-ignored-buffer-modes 'tags-table-mode))
 
 (use-package marginalia
-  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
-  ;; available in the *Completions* buffer, add it to the
-  ;; `completion-list-mode-map'.
-  :bind (:map minibuffer-local-map
-	 ("M-A" . marginalia-cycle))
 
-  ;; The :init section is always executed.
+  :bind
+  (:map minibuffer-local-map
+        ("M-A" . marginalia-cycle))
   :init
-
-  ;; Marginalia must be activated in the :init section of use-package such that
-  ;; the mode gets enabled right away. Note that this forces loading the
-  ;; package.
   (marginalia-mode))
 
 (use-package which-key
-  :ensure t
+
   :config
   (which-key-mode))
 
@@ -354,32 +400,31 @@
 (bind-key "C-s-<up>" 'move-line-up)
 
 (use-package avy
-  :ensure t
+
   :bind 
-  ("C-j" . avy-goto-char))		; originally (eval-print-last-sexp)
+  ("M-c" . avy-goto-char))		; originally (capitalize-word)
 
 (use-package ace-link
-  :ensure t
+
   :config
   (ace-link-setup-default))
 
 (use-package ace-window
-  :ensure t
-  :bind ("M-o". ace-window))
+
+  :bind ("M-o". ace-window)
+  :custom
+  (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 
 (use-package zoom-window
-  :ensure t
+
   :bind ("C-\\" . zoom-window-zoom))	; originally toggleinput-method
 
 (use-package vundo
-  :ensure t
+
   :bind ("C-x u" . vundo))
 
-(use-package expand-region
-  :bind ("C-=" . er/expand-region))
-
 (use-package denote
-  :ensure t
+
   :bind (("C-c n n" . denote)
 	 ("C-c n s" . denote-subdirectory)
 	 ("C-c n i" . denote-link)
@@ -391,34 +436,32 @@
   (denote-directory "~/notes/"))
 
 (use-package consult-denote
-  :ensure t
+
   :bind (("C-c n f" . consult-denote-find)
 	 ("C-c n g" . consult-denote-grep))
   :config
   (consult-denote-mode 1))
 
 (use-package yasnippet
-  :ensure t
+
   :config
   (yas-global-mode 1))
 
 (use-package yasnippet-snippets
-  :ensure t
+
   :after yasnippet)
 
-;; (setq tab-bar-show 1)                      ;; hide bar if <= 1 tabs open
-(customize-set-variable 'tab-bar-show nil) ; on customize-set-variable see https://emacs.stackexchange.com/a/106
+(use-package tab-bar
+  :custom ((tab-bar-show nil)		; hide bar if <= 1 tabs open
+           (tab-bar-auto-width nil)
+           (tab-bar-select-tab-modifiers '(super))
+           (tab-bar-close-button-show nil)))
+
+
+;; (setopt tab-bar-show nil) ; on customize-set-variable see https://emacs.stackexchange.com/a/106
 ;; (setq tab-bar-close-button-show nil)       ;; hide tab close / X button
 ;; (setq tab-bar-tab-hints nil) ;; show tab numbers
 ;; (setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator)) ;; elements to include in bar
-
-(use-package minions
-  :ensure t
-  :config 
-  (minions-mode 1))
-
-(use-package mode-line-bell
-  :init (mode-line-bell-mode))
 
 (use-package activities
   :init
@@ -428,47 +471,61 @@
   (setq edebug-inhibit-emacs-lisp-mode-bindings t)
   :config
   (bind-keys :prefix-map my-activities-map
-             :prefix "s-a"
+             :prefix "C-x C-a"
              :prefix-docstring "Keymap for activities-mode"
-             ("s-n" . activities-new)
-             ("s-d" . activities-define)
-             ("s-a" . activities-resume)
-             ("s-s" . activities-suspend)
-             ("s-k" . activities-kill)
+             ("C-n" . activities-new)
+             ("C-d" . activities-define)
+             ("C-a" . activities-resume)
+             ("C-s" . activities-suspend)
+             ("C-k" . activities-kill)
              ("RET" . activities-switch)
              ("b" . activities-switch-buffer)
              ("g" . activities-revert)
              ("l" . activities-list)))
 
 (use-package popper
-  :ensure t
-  :bind (("s-`"   . popper-toggle)
-         ("s-1"   . popper-cycle)
-         ("s-2" . popper-toggle-type))
-  :init
-  (setq popper-reference-buffers
-        '("\\*Messages\\*"
-          "Output\\*$"
-          "\\*Async Shell Command\\*"
-          help-mode
-          compilation-mode))
-  (popper-mode +1)
-  (popper-echo-mode +1))
+  :bind (("H-`"   . popper-toggle)
+         ("H-<tab>"   . popper-cycle)
+         (:map popper-mode-map
+               ("H-~" . popper-toggle-type)))
+  :custom
+  ;; specify buffer types for popper to control
+  (popper-reference-buffers '("Output\\*$"
+                              "\\*Async Shell Command\\*"
+                              help-mode
+                              compilation-mode
+                              ;; and suppress or hide some of them
+                              ("\\*Messages\\*" . hide)
+                              ("\\*Warnings\\*" . hide)))
+  :hook
+  (after-init . popper-mode)
+  (After-init . popper-echo-mode))
+
+(use-package winner
+  :hook (after-init . winner-mode)
+  :bind (("s-/" . winner-undo)
+         ("s-?" . winner-redo))
+  :custom
+  (winner-dont-bind-my-keys t)
+  (winner-boring-buffers '("*Completions*"
+                           "*Compile-Log*"
+                           "*inferior-lisp*"
+                           "*Fuzzy Completions*"
+                           "*Apropos*"
+                           "*Help*"
+                           "*Buffer List*"
+                           "*Ibuffer*"
+                           "*Warnings*"
+                           "*Messages*")))
 
 (setq dired-dwim-target t)
-
-(use-package dired+)
-
-(use-package casual-dired
-  :commands casual-dired-tmenu
-  :bind (:map dired-mode-map ("C-z d h" . #'casual-dired-tmenu)))
 
 (use-package magit
   :bind (("C-x g" . magit-status)
 	 ("C-x C-g" . magit-status)))
 
 (use-package geiser-mit 
-  :ensure t
+
   :config
   (setq geiser-racket-binary (executable-find "Racket")))
 
@@ -492,10 +549,10 @@
 ;;   )
 
 (use-package tree-sitter
-  :ensure t)
+  )
 
 (use-package tree-sitter-langs
-  :ensure t
+
   :after tree-sitter
   :config
   (tree-sitter-langs-install-grammars :skip-if-installed))
@@ -512,31 +569,33 @@
   :mode ("\\.py\\'" . python-ts-mode)
   ;; :hook (python-ts-mode (lambda () (run-hooks 'python-mode-hook)))
   :custom
-  (python-indent-guess-indent-offset-verbose nil)
+  (fill-column 72)
+  (python-indent-offset 4)
   (python-shell-completion-native-enable nil)) ; see https://emacs.stackexchange.com/questions/30082/your-python-shell-interpreter-doesn-t-seem-to-support-readline
 
 (use-package pdf-tools
- :pin manual ;; manually update
- :mode  ("\\.pdf\\'" . pdf-view-mode)
- :config
- ;; initialise
- (pdf-tools-install :no-query)
- ;; open pdfs scaled to fit page
- (setq-default pdf-view-display-size 'fit-width)
- ;; automatically annotate highlights
- (setq pdf-annot-activate-created-annotations t)
- ;; use normal isearch
- (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+
+  :pin manual ;; manually update
+  :mode  ("\\.[pP][dD][fF]\\'" . pdf-view-mode)
+  :bind (:map pdf-view-mode-map
+              ("C-s" . isearch-forward))
+  ;; :init
+  ;; (pdf-loader-install)
+  :config
+  (pdf-loader-install)
+  ;; (pdf-tools-install :no-query)
+  ;; open pdfs scaled to fit page
+  (setq-default pdf-view-display-size 'fit-width))
 
 (use-package info-variable-pitch
-  :ensure t
+
   :hook (info-mode . info-variable-pitch-mode))
 
 (use-package olivetti
-  :ensure t)
+  )
 
 (use-package buffer-flip
-  :ensure t
+
   :bind  (("M-\\" . buffer-flip)	; originally delete-horizontal-space
           :map buffer-flip-map
           ( "M-\\" .   buffer-flip-forward) 
@@ -549,5 +608,5 @@
   )
 
 (use-package fwb-cmds
-  :ensure t
+
   :bind ("s-\\" . fwb-toggle-window-split))
