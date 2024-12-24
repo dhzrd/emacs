@@ -82,6 +82,7 @@
   (org-hide-emphasis-markers t)
   (org-pretty-entities t)
   :hook (org-mode . visual-line-mode)
+  :bind ("H-o t" . org-babel-tangle-file)
   :config
 
   ;; Rebind some commands in org-mode so as to free up some key sequences (that are elsewhere defined)
@@ -115,10 +116,9 @@
 (use-package ns-win
   :when (eq system-type 'darwin)
   :init
-  (setopt mac-command-modifier 'meta
-          mac-option-modifier 'super
-          mac-function-modifier 'hyper
-          mac-right-option-modifier nil))
+  (setopt mac-command-modifier 'super
+          mac-option-modifier 'meta
+          mac-right-control-modifier 'hyper))
 
 (use-package free-keys
   :custom
@@ -151,6 +151,7 @@
          ;; C-x bindings in `ctl-x-map'
          ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("s-b" . consult-buffer)                ;; orig. switch-to-buffer
          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
          ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
@@ -270,7 +271,7 @@
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
-(use-package corfu-
+(use-package corfu
   :bind ("s-<tab>" . corfu-expand)
   ;; Optional customizations
   ;; :custom
@@ -400,9 +401,10 @@
 (bind-key "C-s-<up>" 'move-line-up)
 
 (use-package avy
-
+  :ensure t
   :bind 
-  ("M-c" . avy-goto-char))		; originally (capitalize-word)
+  ("s-i" . avy-goto-char)
+  ("s-f" . avy-goto-char-timer))
 
 (use-package ace-link
 
@@ -420,8 +422,8 @@
   :bind ("C-\\" . zoom-window-zoom))	; originally toggleinput-method
 
 (use-package vundo
-
-  :bind ("C-x u" . vundo))
+  :bind (("C-x u" . vundo)
+         ("s-z" . vundo)))
 
 (use-package denote
 
@@ -463,26 +465,6 @@
 ;; (setq tab-bar-tab-hints nil) ;; show tab numbers
 ;; (setq tab-bar-format '(tab-bar-format-tabs tab-bar-separator)) ;; elements to include in bar
 
-(use-package activities
-  :init
-  (activities-mode)
-  (activities-tabs-mode)
-  ;; Prevent `edebug' default bindings from interfering.
-  (setq edebug-inhibit-emacs-lisp-mode-bindings t)
-  :config
-  (bind-keys :prefix-map my-activities-map
-             :prefix "C-x C-a"
-             :prefix-docstring "Keymap for activities-mode"
-             ("C-n" . activities-new)
-             ("C-d" . activities-define)
-             ("C-a" . activities-resume)
-             ("C-s" . activities-suspend)
-             ("C-k" . activities-kill)
-             ("RET" . activities-switch)
-             ("b" . activities-switch-buffer)
-             ("g" . activities-revert)
-             ("l" . activities-list)))
-
 (use-package popper
   :bind (("H-`"   . popper-toggle)
          ("H-<tab>"   . popper-cycle)
@@ -516,18 +498,22 @@
                            "*Buffer List*"
                            "*Ibuffer*"
                            "*Warnings*"
-                           "*Messages*")))
+                           "*Messages*"
+                           "*Activities (error)")))
 
 (setq dired-dwim-target t)
 
+(use-package reveal-in-osx-finder
+  :ensure t
+  :bind ("H-f" . reveal-in-osx-finder))
+
 (use-package magit
-  :bind (("C-x g" . magit-status)
-	 ("C-x C-g" . magit-status)))
+  :bind ("H-g" . magit-status))
 
-(use-package geiser-mit 
+;; (use-package geiser-mit 
 
-  :config
-  (setq geiser-racket-binary (executable-find "Racket")))
+;;   :config
+;;   (setq geiser-racket-binary (executable-find "Racket")))
 
 ;; (use-package ultra-scroll-mac
 ;;   :if (eq window-system 'mac)
@@ -539,14 +525,11 @@
 ;;   (ultra-scroll-mac-mode 1))
 
 
-
-;; (use-package py-vterm-interaction
-;;   :hook (python-mode . py-vterm-interaction-mode)
-;;   :config
-;;   ;;; Suggested:
-;;   ;; (setq-default py-vterm-interaction-repl-program "ipython")
-;;   ;; (setq-default py-vterm-interaction-silent-cells t)
-;;   )
+(use-package py-vterm-interaction
+  :hook (python-mode . py-vterm-interaction-mode)
+  :custom
+  (py-vterm-interaction-repl-program "ipython -i")
+  (py-vterm-interaction-silent-cells t))
 
 (use-package tree-sitter
   )
@@ -566,12 +549,49 @@
   (global-treesit-auto-mode))
 
 (use-package python
+  :preface
+  ;; Define commands to toggle between buffer and shell. From https://www.masteringemacs.org/article/toggling-python-buffers
+  (defvar python-last-buffer nil
+    "Name of the Python buffer that last invoked `toggle-between-python-buffers'")
+
+  (make-variable-buffer-local 'python-last-buffer)
+
+  (defun toggle-between-python-buffers ()
+    "Toggles between a `python-mode' buffer and its inferior Python process
+
+When invoked from a `python-mode' buffer it will switch the
+active buffer to its associated Python process. If the command is
+invoked from a Python process, it will switch back to the `python-mode' buffer."
+    (interactive)
+    ;; check if `major-mode' is `python-mode' and if it is, we check if
+    ;; the process referenced in `python-buffer' is running
+    (if (and (eq major-mode 'python-mode)
+             (processp (get-buffer-process python-buffer)))
+        (progn
+          ;; store a reference to the current *other* buffer; relying
+          ;; on `other-buffer' alone wouldn't be wise as it would never work
+          ;; if a user were to switch away from the inferior Python
+          ;; process to a buffer that isn't our current one. 
+          (switch-to-buffer python-buffer)
+          (setq python-last-buffer (other-buffer)))
+      ;; switch back to the last `python-mode' buffer, but only if it
+      ;; still exists.
+      (when (eq major-mode 'inferior-python-mode)
+        (if (buffer-live-p python-last-buffer)
+            (switch-to-buffer python-last-buffer)
+          ;; buffer's dead; clear the variable.
+          (setq python-last-buffer nil)))))
+
+  (unbind-key "s-o")
   :mode ("\\.py\\'" . python-ts-mode)
   ;; :hook (python-ts-mode (lambda () (run-hooks 'python-mode-hook)))
   :custom
   (fill-column 72)
   (python-indent-offset 4)
-  (python-shell-completion-native-enable nil)) ; see https://emacs.stackexchange.com/questions/30082/your-python-shell-interpreter-doesn-t-seem-to-support-readline
+  (python-shell-completion-native-enable nil) ; see https://emacs.stackexchange.com/questions/30082/your-python-shell-interpreter-doesn-t-seem-to-support-readline
+
+  :bind (:map python-mode-map ("s-o" . toggle-between-python-buffers)
+         :map inferior-python-mode-map ("s-o" . toggle-between-python-buffers)))
 
 (use-package pdf-tools
 
@@ -594,19 +614,30 @@
 (use-package olivetti
   )
 
-(use-package buffer-flip
-
-  :bind  (("M-\\" . buffer-flip)	; originally delete-horizontal-space
-          :map buffer-flip-map
-          ( "M-\\" .   buffer-flip-forward) 
-          ( "M-|" . buffer-flip-backward) ; originally shell-command-on-region
-          ( "M-ESC" .     buffer-flip-abort))
-  ;; :config
-  ;; (setq buffer-flip-skip-patterns
-  ;;       '("^\\*helm\\b"
-  ;;         "^\\*swiper\\*$"))
-  )
-
 (use-package fwb-cmds
 
   :bind ("s-\\" . fwb-toggle-window-split))
+
+(use-package activities
+  :init
+  (activities-mode)
+  (activities-tabs-mode)
+  ;; Prevent `edebug' default bindings from interfering.
+  (setq edebug-inhibit-emacs-lisp-mode-bindings t)
+  :init
+  (bind-keys :prefix-map my/prefix-map-activities
+             :prefix "s-a"
+             ("s-n" . activities-new)
+             ("s-d" . activities-define)
+             ("s-a" . activities-resume)
+             ("s-s" . activities-suspend)
+             ("s-k" . activities-kill)
+             ("RET" . activities-switch)
+             ("b" . activities-switch-buffer)
+             ("g" . activities-revert)
+             ("l" . activities-list)))
+
+;; (use-package whole-line-or-region
+;;   :ensure t
+;;   :hook (after-init . whole-line-or-region)
+;;   :config (whole-line-or-region-global-mode))

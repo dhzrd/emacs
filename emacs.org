@@ -53,7 +53,6 @@ Preset for =no-littering= (from https://github.com/emacscollective/no-littering)
 :header-args: :tangle init.el
 :END:
 ** no-littering
-
 #+begin_src emacs-lisp
   (use-package no-littering
     :init
@@ -178,6 +177,7 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
     (org-hide-emphasis-markers t)
     (org-pretty-entities t)
     :hook (org-mode . visual-line-mode)
+    :bind ("H-o t" . org-babel-tangle-file)
     :config
 
     ;; Rebind some commands in org-mode so as to free up some key sequences (that are elsewhere defined)
@@ -221,17 +221,87 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
     (org-mode . org-tidy-mode))
 #+end_src
 
-** Key-mapping and -binding
+** Keys
+*** Karabiner
+
+On a Macbook Air M3 (2024):
+- caps lock : control (C-)
+- control : control + meta (C-M)
+- option (left) : hyper (H-)
+- command (left): super (s-)
+- command (right): meta (M-)
+- option (right): unchanged, for character input
+- return : control on hold (C-), return on press
+
+
+
+#+begin_src js :tangle no
+  {
+      "profiles": [
+          {
+              "complex_modifications": {
+                  "rules": [
+                      {
+                          "description": "esc: escape when pressed alone and right_option when held",
+                          "manipulators": [
+                              {
+                                  "from": {
+                                      "key_code": "escape",
+                                      "modifiers": { "optional": ["any"] }
+                                  },
+                                  "to": [{ "key_code": "right_option" }],
+                                  "to_if_alone": [{ "key_code": "escape" }],
+                                  "type": "basic"
+                              }
+                          ]
+                      },
+                      {
+                          "description": "return: return when pressed alone and left_control when held",
+                          "manipulators": [
+                              {
+                                  "from": {
+                                      "key_code": "return_or_enter",
+                                      "modifiers": { "optional": ["any"] }
+                                  },
+                                  "to": [{ "key_code": "left_control" }],
+                                  "to_if_alone": [{ "key_code": "return_or_enter" }],
+                                  "type": "basic"
+                              }
+                          ]
+                      }
+                  ]
+              },
+              "name": "Macbook Air M3 2024",
+              "selected": true,
+              "simple_modifications": [
+                  {
+                      "from": { "key_code": "caps_lock" },
+                      "to": [{ "key_code": "left_control" }]
+                  },
+                  {
+                      "from": { "key_code": "left_control" },
+                      "to": [{ "key_code": "right_control" }]
+                  },
+                  {
+                      "from": { "key_code": "right_option" },
+                      "to": [{ "key_code": "left_option" }]
+                  }
+              ],
+              "virtual_hid_keyboard": { "keyboard_type_v2": "ansi" }
+          }
+      ]
+  }
+#+end_src
+
 *** Modifiers Keys on MacOS
 
 #+begin_src emacs-lisp
   (use-package ns-win
     :when (eq system-type 'darwin)
     :init
-    (setopt mac-command-modifier 'meta
-            mac-option-modifier 'super
-            mac-function-modifier 'hyper
-            mac-right-option-modifier nil))
+    (setopt mac-command-modifier 'super
+            mac-option-modifier 'meta
+            mac-right-control-modifier 'hyper))
 #+end_src
 
 *** free-keys
@@ -270,7 +340,7 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
 *** Consult
 #+begin_src emacs-lisp
   (use-package consult
-    
+
     :bind (;; C-c bindings in `mode-specific-map'
            ("C-c M-x" . consult-mode-command)
            ("C-c h" . consult-history)
@@ -281,6 +351,7 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
            ;; C-x bindings in `ctl-x-map'
            ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
            ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+           ("s-b" . consult-buffer)                ;; orig. switch-to-buffer
            ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
            ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
            ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
@@ -326,7 +397,7 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
            ;; Other commands
            ("C-x C-r" . consult-recent-file)) ;; orig. find-file-read-only
 
-  
+
     :hook
     ;; Enable automatic preview at point in the *Completions* buffer.
     (completion-list-mode . consult-preview-at-point-mode)
@@ -412,7 +483,7 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
 *** Corfu
 
 #+begin_src emacs-lisp
-  (use-package corfu-
+  (use-package corfu
     :bind ("s-<tab>" . corfu-expand)
     ;; Optional customizations
     ;; :custom
@@ -567,9 +638,10 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
 *** avy
 #+begin_src emacs-lisp
   (use-package avy
-
+    :ensure t
     :bind 
-    ("M-c" . avy-goto-char))		; originally (capitalize-word)
+    ("s-i" . avy-goto-char)
+    ("s-f" . avy-goto-char-timer))
 #+end_src
 
 *** ace-link
@@ -602,8 +674,8 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
 *** vundo
 #+begin_src emacs-lisp
   (use-package vundo
-    
-    :bind ("C-x u" . vundo))
+    :bind (("C-x u" . vundo)
+           ("s-z" . vundo)))
 #+end_src
 *** expreg
 #+begin_src emacs-lisp :tangle no
@@ -666,30 +738,6 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
 
 #+end_src
 
-*** activities
-
-#+begin_src emacs-lisp
-  (use-package activities
-    :init
-    (activities-mode)
-    (activities-tabs-mode)
-    ;; Prevent `edebug' default bindings from interfering.
-    (setq edebug-inhibit-emacs-lisp-mode-bindings t)
-    :config
-    (bind-keys :prefix-map my-activities-map
-               :prefix "C-x C-a"
-               :prefix-docstring "Keymap for activities-mode"
-               ("C-n" . activities-new)
-               ("C-d" . activities-define)
-               ("C-a" . activities-resume)
-               ("C-s" . activities-suspend)
-               ("C-k" . activities-kill)
-               ("RET" . activities-switch)
-               ("b" . activities-switch-buffer)
-               ("g" . activities-revert)
-               ("l" . activities-list)))
-#+end_src
-
 *** popper
 
 #+begin_src emacs-lisp
@@ -730,7 +778,8 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
                              "*Buffer List*"
                              "*Ibuffer*"
                              "*Warnings*"
-                             "*Messages*"))) 
+                             "*Messages*"
+                             "*Activities (error)"))) 
 #+end_src
 
 *** windmove
@@ -769,21 +818,28 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
     (dired-find-subdir t))
 #+end_src
 
+*** dired-open-with
+
+#+begin_src emacs-lisp
+  (use-package reveal-in-osx-finder
+    :ensure t
+    :bind ("H-f" . reveal-in-osx-finder))
+#+end_src
+
 ** Version Control
 *** magit
 #+begin_src emacs-lisp
   (use-package magit
-    :bind (("C-x g" . magit-status)
-	   ("C-x C-g" . magit-status)))
+    :bind ("H-g" . magit-status))
 #+end_src
 
 ** Programming
 
 #+begin_src emacs-lisp
-  (use-package geiser-mit 
-    
-    :config
-    (setq geiser-racket-binary (executable-find "Racket")))
+  ;; (use-package geiser-mit 
+
+  ;;   :config
+  ;;   (setq geiser-racket-binary (executable-find "Racket")))
 
   ;; (use-package ultra-scroll-mac
   ;;   :if (eq window-system 'mac)
@@ -795,14 +851,11 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
   ;;   (ultra-scroll-mac-mode 1))
 
 
-
-  ;; (use-package py-vterm-interaction
-  ;;   :hook (python-mode . py-vterm-interaction-mode)
-  ;;   :config
-  ;;   ;;; Suggested:
-  ;;   ;; (setq-default py-vterm-interaction-repl-program "ipython")
-  ;;   ;; (setq-default py-vterm-interaction-silent-cells t)
-  ;;   )
+  (use-package py-vterm-interaction
+    :hook (python-mode . py-vterm-interaction-mode)
+    :custom
+    (py-vterm-interaction-repl-program "ipython -i")
+    (py-vterm-interaction-silent-cells t))
 #+end_src
 
 *** tree-sitter
@@ -838,12 +891,49 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
 
 #+begin_src emacs-lisp
   (use-package python
+    :preface
+    ;; Define commands to toggle between buffer and shell. From https://www.masteringemacs.org/article/toggling-python-buffers
+    (defvar python-last-buffer nil
+      "Name of the Python buffer that last invoked `toggle-between-python-buffers'")
+
+    (make-variable-buffer-local 'python-last-buffer)
+
+    (defun toggle-between-python-buffers ()
+      "Toggles between a `python-mode' buffer and its inferior Python process
+
+  When invoked from a `python-mode' buffer it will switch the
+  active buffer to its associated Python process. If the command is
+  invoked from a Python process, it will switch back to the `python-mode' buffer."
+      (interactive)
+      ;; check if `major-mode' is `python-mode' and if it is, we check if
+      ;; the process referenced in `python-buffer' is running
+      (if (and (eq major-mode 'python-mode)
+               (processp (get-buffer-process python-buffer)))
+          (progn
+            ;; store a reference to the current *other* buffer; relying
+            ;; on `other-buffer' alone wouldn't be wise as it would never work
+            ;; if a user were to switch away from the inferior Python
+            ;; process to a buffer that isn't our current one. 
+            (switch-to-buffer python-buffer)
+            (setq python-last-buffer (other-buffer)))
+        ;; switch back to the last `python-mode' buffer, but only if it
+        ;; still exists.
+        (when (eq major-mode 'inferior-python-mode)
+          (if (buffer-live-p python-last-buffer)
+              (switch-to-buffer python-last-buffer)
+            ;; buffer's dead; clear the variable.
+            (setq python-last-buffer nil)))))
+
+    (unbind-key "s-o")
     :mode ("\\.py\\'" . python-ts-mode)
     ;; :hook (python-ts-mode (lambda () (run-hooks 'python-mode-hook)))
     :custom
     (fill-column 72)
     (python-indent-offset 4)
-    (python-shell-completion-native-enable nil)) ; see https://emacs.stackexchange.com/questions/30082/your-python-shell-interpreter-doesn-t-seem-to-support-readline
+    (python-shell-completion-native-enable nil) ; see https://emacs.stackexchange.com/questions/30082/your-python-shell-interpreter-doesn-t-seem-to-support-readline
+
+    :bind (:map python-mode-map ("s-o" . toggle-between-python-buffers)
+           :map inferior-python-mode-map ("s-o" . toggle-between-python-buffers)))
 #+end_src
 
 *** racket
@@ -875,7 +965,7 @@ https://github.com/kisaragi-hiu/info-variable-pitch
     :hook (info-mode . info-variable-pitch-mode))
 #+end_src
 
-** olivett-mode
+** olivetti-mode
 
 #+begin_src emacs-lisp
   (use-package olivetti
@@ -884,7 +974,7 @@ https://github.com/kisaragi-hiu/info-variable-pitch
 
 ** buffer-flip
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (use-package buffer-flip
     
     :bind  (("M-\\" . buffer-flip)	; originally delete-horizontal-space
@@ -906,6 +996,38 @@ https://github.com/kisaragi-hiu/info-variable-pitch
     
     :bind ("s-\\" . fwb-toggle-window-split))
 #+end_src
+** activities
+
+#+begin_src emacs-lisp
+  (use-package activities
+    :init
+    (activities-mode)
+    (activities-tabs-mode)
+    ;; Prevent `edebug' default bindings from interfering.
+    (setq edebug-inhibit-emacs-lisp-mode-bindings t)
+    :init
+    (bind-keys :prefix-map my/prefix-map-activities
+               :prefix "s-a"
+               ("s-n" . activities-new)
+               ("s-d" . activities-define)
+               ("s-a" . activities-resume)
+               ("s-s" . activities-suspend)
+               ("s-k" . activities-kill)
+               ("RET" . activities-switch)
+               ("b" . activities-switch-buffer)
+               ("g" . activities-revert)
+               ("l" . activities-list)))
+#+end_src
+
+** whole-line-or-region
+
+#+begin_src emacs-lisp
+  ;; (use-package whole-line-or-region
+  ;;   :ensure t
+  ;;   :hook (after-init . whole-line-or-region)
+  ;;   :config (whole-line-or-region-global-mode))
+#+end_src
+
 
 * TO-DO
 ** frame commands
@@ -923,7 +1045,8 @@ https://github.com/kisaragi-hiu/info-variable-pitch
     :load-path "lisp"
     )
 #+end_src
-* lettercase
+
+* transient
 
 #+begin_src emacs-lisp
   (bind-keys :prefix-map my-prefix-map-letter-case
@@ -934,4 +1057,17 @@ https://github.com/kisaragi-hiu/info-variable-pitch
              ("L" . downcase-region)
              ("u" . upcase-word)
              ("U" . upcase-word))
+
+  (transient-define-prefix my/transient-lettercase ()
+    "Capitalize words and manipulate letter-case."
+    [[("c" "capitalize word" capitalize-word)]
+     [("l" "lowercase word" downcase-word)
+       ("L" "lowercase region" downcase-region)]
+     [("u" "uppercase word" upcase-word)
+       ("U" "uppercase region" upcase-region)]])
+
+    (Bind-key "M-u" 'duplicate-dwim)
+
+  
 #+end_src
+
