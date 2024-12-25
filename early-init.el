@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t -*-
+
 (add-to-list 'default-frame-alist '(undecorated-round . t))
 (setq frame-resize-pixelwise t)
 

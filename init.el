@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t -*-
+
 (use-package no-littering
   :init
   (eval-and-compile ; Ensure values don't differ at compile time.
@@ -108,21 +110,25 @@
   :config ; add late to hook
   (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
 
-(use-package org-tidy
-
-  :hook
-  (org-mode . org-tidy-mode))
-
 (use-package ns-win
   :when (eq system-type 'darwin)
   :init
   (setopt mac-command-modifier 'super
           mac-option-modifier 'meta
+          mac-right-option-modifier 'nil
           mac-right-control-modifier 'hyper))
 
 (use-package free-keys
   :custom
   (free-keys-modifiers '("" "C" "M" "C-M" "s" "H")))
+
+(use-package misc
+  :ensure nil
+  :bind
+  ;; Rebind 'M-z' as 'zap-up-to-char'. 'zap-to-char' is still available
+  ;; at 'M-Z'. But see 'avy-zap' further below.
+  ("M-z" . zap-up-to-char)
+  ("s-y" . duplicate-dwim))		; †ns-paste-secondary
 
 (use-package recentf
   :config
@@ -406,6 +412,13 @@
   ("s-i" . avy-goto-char)
   ("s-f" . avy-goto-char-timer))
 
+(use-package avy-zap
+  :after avy
+  :ensure t
+  :bind
+  ([remap zap-up-to-char] . avy-zap-up-to-char-dwim)
+  ([remap zap-to-char] . avy-zap-to-char-dwim))
+
 (use-package ace-link
 
   :config
@@ -413,7 +426,7 @@
 
 (use-package ace-window
 
-  :bind ("M-o". ace-window)
+  :bind ([remap other-window] . ace-window)
   :custom
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 
@@ -530,6 +543,14 @@
   :custom
   (py-vterm-interaction-repl-program "ipython -i")
   (py-vterm-interaction-silent-cells t))
+
+(use-package paredit
+  :ensure t
+  :demand
+  :hook ((emacs-lisp-mode . paredit-mode)
+         (lisp-mode . paredit-mode)
+         (lisp-interaction-mode . paredit-mode)
+         (eval-expression-minibuffer-setup . paredit-mode)))
 
 (use-package tree-sitter
   )
