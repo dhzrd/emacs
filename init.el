@@ -1,4 +1,21 @@
-;;; -*- lexical-binding: t -*-
+;;; init.el --- My Emacs Init File -*- lexical-binding: t -*-
+
+;; This file is not part of GNU Emacs
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Code:
 
 (use-package no-littering
   :init
@@ -425,8 +442,9 @@
   (ace-link-setup-default))
 
 (use-package ace-window
-
-  :bind ([remap other-window] . ace-window)
+  :ensure t
+  :demand
+  :bind ("M-o" . ace-window)
   :custom
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 
@@ -658,7 +676,6 @@ invoked from a Python process, it will switch back to the `python-mode' buffer."
              ("g" . activities-revert)
              ("l" . activities-list)))
 
-;; (use-package whole-line-or-region
-;;   :ensure t
-;;   :hook (after-init . whole-line-or-region)
-;;   :config (whole-line-or-region-global-mode))
+(provide 'init)
+
+;;; init.el ends here
