@@ -29,25 +29,10 @@
   (setq custom-file
         (expand-file-name "custom.el" user-emacs-directory)))
 
-;; (use-package package
-;;   :custom package-archives
-;;         '(("gnu" . "https://elpa.gnu.org/packages/")
-;;           ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-;;           ("melpa" . "https://melpa.org/packages/")))
-
-(setopt package-archives
-        '(("gnu" . "https://elpa.gnu.org/packages/")
-          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-          ("melpa" . "https://melpa.org/packages/")))
-
-(use-package prog-mode
-  :hook (prog-mode . display-fill-column-indicator-mode))
-
-(use-package display-fill-column-indicator
-  :custom (display-fill-column-indicator-character nil)                                   
-  :custom-face (fill-column-indicator
-                ((t (:height 1.0 :foreground "grey"))))
-  :hook (prog-mode . display-fill-column-indicator-mode))
+(use-package package
+  :config
+  (add-to-list 'package-archives ; the default list contains ELPA and non-GNU ELPA
+               '("melpa" . "https://melpa.org/packages/") t))
 
 (use-package minions
   :custom
@@ -92,30 +77,29 @@
   (text-mode . mixed-pitch-mode))
 
 (use-package org
-  :delight org-mode "org-mode"		; define mode-line lighter
   :custom
   (org-startup-indented t)
   (org-ellipsis " …")
-  (set-face-underline 'org-ellipsis nil) ; remove underline from custom org-ellipsis
+  ;; Remove underline from org-ellipsis just defined.
+  (set-face-underline 'org-ellipsis nil)
   (org-catch-invisible-edits 'show-and-error)
   (org-special-ctrl-a/e t)
   (org-insert-heading-respect-content t)
   (org-hide-emphasis-markers t)
   (org-pretty-entities t)
   :hook (org-mode . visual-line-mode)
-  :bind ("H-o t" . org-babel-tangle-file)
-  :config
-
-  ;; Rebind some commands in org-mode so as to free up some key sequences (that are elsewhere defined)
-
-  ;; (unbind-key "C-j" org-mode-map)	; originally org-return-and-maybe-indent
-  ;; (bind-key "C-m" 'org-return-and-maybe-indent org-mode-map) ; originally (org-return) which is also available at RET
-
-  (unbind-key "C-," org-mode-map)	; originally org-cycle-agenda-files
-  (unbind-key "C-'" org-mode-map)	; originally org-cycle-agenda-files
-  (bind-key "C-<" 'org-cycle-agenda-files org-mode-map))
+  :bind
+  ("H-o t" . org-babel-tangle-file)
+  (:prefix-map my-org-narrowing-prefix-map
+               :prefix "s-n"
+               :prefix-docstring
+               "Prefix map for narrowing commands in Org-mode."
+               ("s" . org-narrow-to-subtree)
+               ("b" . org-narrow-to-block)
+               ("w" . widen)))
 
 (use-package org-modern
+  :after org
   :custom
   (org-modern-hide-stars nil)		; adds extra indentation
   (org-modern-block-name '("" . ""))
@@ -140,6 +124,18 @@
 (use-package free-keys
   :custom
   (free-keys-modifiers '("" "C" "M" "C-M" "s" "H")))
+
+(use-package emacs
+  :bind
+  (:map global-map
+        :prefix-map my-global-narrow-prefix-map
+        :prefix "s-n"
+        :prefix-docstring
+        "Prefix map for narrowing commands."
+        ("n" . narrow-to-region)
+        ("d" . narrow-to-defun)
+        ("p" . narrow-to-page)
+        ("w" . widen)))
 
 (use-package misc
   :ensure nil
@@ -282,7 +278,7 @@
   (global-corfu-mode)
   :custom
   ;; Enable indentation+completion using the TAB key.
-  ;; `completion-at-point' is often bound to M-TAB.
+  ;; `completion-at-point' is often biound to M-TAB.
   (tab-always-indent 'complete)
   ;; Hide commands in M-x which do not apply to the current mode.  Corfu
   ;; commands are hidden, since they are not used via M-x. This setting is
@@ -290,7 +286,7 @@
   (read-extended-command-predicate #'command-completion-default-include-p))
 
 (use-package marginalia
-
+  :ensure t
   :bind
   (:map minibuffer-local-map
         ("M-A" . marginalia-cycle))
@@ -298,19 +294,17 @@
   (marginalia-mode))
 
 (use-package which-key
-
+  :ensure t
   :config
   (which-key-mode))
 
 (use-package transient)
 
 (use-package yasnippet
-
   :config
   (yas-global-mode 1))
 
 (use-package yasnippet-snippets
-
   :after yasnippet)
 
 (use-package hippie-exp
@@ -368,11 +362,12 @@
   ([remap zap-to-char] . avy-zap-to-char-dwim))
 
 (use-package ace-link
-
+  :ensure t
   :config
   (ace-link-setup-default))
 
 (use-package vundo
+  :ensure t
   :bind (("C-x u" . vundo)
          ("H-/" . vundo)))
 
@@ -427,6 +422,7 @@
              ("l" . activities-list)))
 
 (use-package popper
+  :ensure t
   :bind (("H-`"   . popper-toggle)
          ("H-<tab>"   . popper-cycle)
          (:map popper-mode-map
@@ -462,6 +458,14 @@
                            "*Messages*"
                            "*Activities (error)")))
 
+(use-package windmove
+  :config
+  (windmove-default-keybindings 'hyper)
+  (windmove-swap-states-default-keybindings '(hyper shift)))
+
+;; (windmove-delete-default-keybindings)
+;; (windmove-display-default-keybindings)
+
 (use-package fwb-cmds
   :ensure t
   :bind ("s-'" . fwb-toggle-window-split)) ; †next-window-any-frame
@@ -486,7 +490,7 @@
 (use-package magit
   :bind ("H-g" . magit-status))
 
-;; (use-package geiser-mit 
+;; (use-package geiser-mit
 
 ;;   :config
 ;;   (setq geiser-racket-binary (executable-find "Racket")))
@@ -496,7 +500,7 @@
 ;;   ;:load-path "~/code/emacs/ultra-scroll-mac" ; if you git clone'd instead of package-vc-install
 ;;   :init
 ;;   (setq scroll-conservatively 101 ; important!
-;;         scroll-margin 0) 
+;;         scroll-margin 0)
 ;;   :config
 ;;   (ultra-scroll-mac-mode 1))
 
@@ -555,7 +559,7 @@ invoked from a Python process, it will switch back to the `python-mode' buffer."
           ;; store a reference to the current *other* buffer; relying
           ;; on `other-buffer' alone wouldn't be wise as it would never work
           ;; if a user were to switch away from the inferior Python
-          ;; process to a buffer that isn't our current one. 
+          ;; process to a buffer that isn't our current one.
           (switch-to-buffer python-buffer)
           (setq python-last-buffer (other-buffer)))
       ;; switch back to the last `python-mode' buffer, but only if it
@@ -581,6 +585,12 @@ invoked from a Python process, it will switch back to the `python-mode' buffer."
   :ensure t
   :mode("\\.rkt?\\'" . racket-mode)
   :custom (racket-program "/Applications/Racket v8.15/bin/racket"))
+
+(use-package display-fill-column-indicator
+  :custom (display-fill-column-indicator-character nil)
+  :custom-face (fill-column-indicator
+                ((t (:height 1.0 :foreground "grey"))))
+  :hook (prog-mode . display-fill-column-indicator-mode))
 
 (use-package pdf-tools
 

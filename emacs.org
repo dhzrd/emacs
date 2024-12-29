@@ -110,6 +110,7 @@ Emacs loads this file before loading the GUI and package system.[fn:1] Here we d
 #+end_src
 
 ** no-littering
+
 #+begin_src emacs-lisp
   (use-package no-littering
     :init
@@ -127,37 +128,10 @@ Emacs loads this file before loading the GUI and package system.[fn:1] Here we d
 ** Package management
 
 #+begin_src emacs-lisp
-  ;; (use-package package
-  ;;   :custom package-archives
-  ;;         '(("gnu" . "https://elpa.gnu.org/packages/")
-  ;;           ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-  ;;           ("melpa" . "https://melpa.org/packages/")))
-
-  (setopt package-archives
-          '(("gnu" . "https://elpa.gnu.org/packages/")
-            ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-            ("melpa" . "https://melpa.org/packages/")))
-#+end_src
-
-The following setting enables globally the ~:ensure~ keyword for ~use-package~ declarations. To override locally use ~:ensure nil~ in the ~use-package~ declaration. For more see https://www.gnu.org/software/emacs/manual/html_mono/use-package.html#Install-package.
-
-#+begin_src emacs-lisp :tangle no
-  (use-package use-package
-    :custom
-    (use-package-always-ensure t))
-#+end_src
-
-** Line-wrapping
-
-#+begin_src emacs-lisp
-  (use-package prog-mode
-    :hook (prog-mode . display-fill-column-indicator-mode))
-
-  (use-package display-fill-column-indicator
-    :custom (display-fill-column-indicator-character nil)                                   
-    :custom-face (fill-column-indicator
-                  ((t (:height 1.0 :foreground "grey"))))
-    :hook (prog-mode . display-fill-column-indicator-mode))
+  (use-package package
+    :config
+    (add-to-list 'package-archives ; the default list contains ELPA and non-GNU ELPA
+                 '("melpa" . "https://melpa.org/packages/") t))
 #+end_src
 
 ** mode-line
@@ -225,34 +199,33 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
 
 #+begin_src emacs-lisp
   (use-package org
-    :delight org-mode "org-mode"		; define mode-line lighter
     :custom
     (org-startup-indented t)
     (org-ellipsis " …")
-    (set-face-underline 'org-ellipsis nil) ; remove underline from custom org-ellipsis
+    ;; Remove underline from org-ellipsis just defined.
+    (set-face-underline 'org-ellipsis nil)
     (org-catch-invisible-edits 'show-and-error)
     (org-special-ctrl-a/e t)
     (org-insert-heading-respect-content t)
     (org-hide-emphasis-markers t)
     (org-pretty-entities t)
     :hook (org-mode . visual-line-mode)
-    :bind ("H-o t" . org-babel-tangle-file)
-    :config
-
-    ;; Rebind some commands in org-mode so as to free up some key sequences (that are elsewhere defined)
-
-    ;; (unbind-key "C-j" org-mode-map)	; originally org-return-and-maybe-indent
-    ;; (bind-key "C-m" 'org-return-and-maybe-indent org-mode-map) ; originally (org-return) which is also available at RET
-
-    (unbind-key "C-," org-mode-map)	; originally org-cycle-agenda-files
-    (unbind-key "C-'" org-mode-map)	; originally org-cycle-agenda-files
-    (bind-key "C-<" 'org-cycle-agenda-files org-mode-map))
+    :bind
+    ("H-o t" . org-babel-tangle-file)
+    (:prefix-map my-org-narrowing-prefix-map
+                 :prefix "s-n"
+                 :prefix-docstring
+                 "Prefix map for narrowing commands in Org-mode."
+                 ("s" . org-narrow-to-subtree)
+                 ("b" . org-narrow-to-block)
+                 ("w" . widen)))
 #+end_src
 
 *** org-modern
 
 #+begin_src emacs-lisp
   (use-package org-modern
+    :after org
     :custom
     (org-modern-hide-stars nil)		; adds extra indentation
     (org-modern-block-name '("" . ""))
@@ -281,18 +254,30 @@ The following setting enables globally the ~:ensure~ keyword for ~use-package~ d
 #+end_src
 
 ** Keyboard, keybinds, keymaps
+
+With a laptop keyboard you have to be inventive if you want ergonomic modifier keys in Emacs. Here is one way to create a symmetrical layout on a Macbook Air keyboard with Control keys at either end of the homerow and Super and Meta keys under each thumb.
+
+| Macbook keys | Karabiner   |             | Emacs   |
+|--------------+-------------+-------------+---------|
+|              | On press    | On hold     |         |
+|--------------+-------------+-------------+---------|
+| esc          | esc         | (R) option  | nil     |
+| caps lock    |             | (L) control | Control |
+| return       | return      | (L) control | Control |
+| (L) control  | (R) control | (R) control | Hyper   |
+| (L) option   | (L) option  | (L) option  | Meta    |
+| (L) command  | (L) command | (L) command | Super   |
+| (R) command  | (R) command | (R) command | Super   |
+| (R) option   | (L) option  | (L) option  | Meta    |
+|              |             |             |         |
+
+In the far left column are keys or keycodes as they are defined by the Macbook at the hardware and system level. In the two middle columns are the corresponding remappings as we configure them in Karabiner. The middle left column contains the keycodes sent by the physical keys when they are pressed individually. (It would be more precise to say when they are pressed and released before another key is pressed.) In the middle right column we see the keycodes sent by the physical keys when they are pressed and held in combination with another key press. Finally in the far right column are the modifier keys assigned within Emacs to the keycodes just described.
+
+A few more things are worth pointing out. The Macbook Air keyboard has an Option key and a Command key on either side of the spacebar. This is great because it means that each thumb can have equal access to a Meta key and Super key. But this creates a problem because, by redefining the two Option keys as Meta keys in Emacs we lose access within Emacs to the dead key and alternate character map that the OS puts behind the Option keys. The way around this is to unbind one of the Option keys and assign it the keycode of the other Option key. (This is possible because MacOS in fact distinguishes between right and left modifier keycodes.) Using Karabiner, we configure the two Option keys to send the same keycode to the OS (in this case, ~left_option~ in Karabiner's notation) and remap the remaining keycode (in this case, ~right_option~) to a different (physical) key, such as Escape. Then within Emacs we disable ~right_option~ as a modifier key so that we are able to send the ~right_option~ keycode—and which we no longer need for the Meta key—to the OS without Emacs getting in the way because it thinks we are pressing Meta.
+
+We can also use the existence of left and right modifiers to set up the physical Control key as a Hyper modifier key within Emacs. First, we make sure that when we want to post the Control keycode we are only sending ~left_control~. Then we map the ~right_control~ keycode onto the lone physical Control key. Finally, we tell tell Emacs to interpret ~right_control~ as the Hyper modifier key.
+
 *** Karabiner
-
-On a Macbook Air M3 (2024):
-- caps lock : control (C-)
-- control : control + meta (C-M)
-- option (left) : hyper (H-)
-- command (left): super (s-)
-- command (right): meta (M-)
-- option (right): unchanged, for character input
-- return : control on hold (C-), return on press
-
-
 
 #+begin_src js :tangle no
   {
@@ -375,6 +360,18 @@ On a Macbook Air M3 (2024):
 *** keymaps
 
 #+begin_src emacs-lisp
+  (use-package emacs
+    :bind
+    (:map global-map
+          :prefix-map my-global-narrow-prefix-map
+          :prefix "s-n"
+          :prefix-docstring
+          "Prefix map for narrowing commands."
+          ("n" . narrow-to-region)
+          ("d" . narrow-to-defun)
+          ("p" . narrow-to-page)
+          ("w" . widen)))
+
   (use-package misc
     :ensure nil
     :bind
@@ -543,7 +540,7 @@ On a Macbook Air M3 (2024):
     (global-corfu-mode)
     :custom
     ;; Enable indentation+completion using the TAB key.
-    ;; `completion-at-point' is often bound to M-TAB.
+    ;; `completion-at-point' is often biound to M-TAB.
     (tab-always-indent 'complete)
     ;; Hide commands in M-x which do not apply to the current mode.  Corfu
     ;; commands are hidden, since they are not used via M-x. This setting is
@@ -555,7 +552,7 @@ On a Macbook Air M3 (2024):
 
 #+begin_src emacs-lisp
   (use-package marginalia
-    
+    :ensure t
     :bind
     (:map minibuffer-local-map
           ("M-A" . marginalia-cycle))
@@ -567,7 +564,7 @@ On a Macbook Air M3 (2024):
 
 #+begin_src emacs-lisp
   (use-package which-key
-    
+    :ensure t
     :config
     (which-key-mode))
 #+end_src
@@ -582,12 +579,10 @@ On a Macbook Air M3 (2024):
 
 #+begin_src emacs-lisp
   (use-package yasnippet
-    
     :config
     (yas-global-mode 1))
 
   (use-package yasnippet-snippets
-    
     :after yasnippet)
 #+end_src
 
@@ -679,7 +674,7 @@ write-region binding:
 
 #+begin_src emacs-lisp
   (use-package ace-link
-    
+    :ensure t
     :config
     (ace-link-setup-default))
 #+end_src
@@ -687,6 +682,7 @@ write-region binding:
 *** vundo
 #+begin_src emacs-lisp
   (use-package vundo
+    :ensure t
     :bind (("C-x u" . vundo)
            ("H-/" . vundo)))
 #+end_src
@@ -766,6 +762,7 @@ write-region binding:
 
 #+begin_src emacs-lisp
   (use-package popper
+    :ensure t
     :bind (("H-`"   . popper-toggle)
            ("H-<tab>"   . popper-cycle)
            (:map popper-mode-map
@@ -808,10 +805,14 @@ write-region binding:
 
 *** windmove
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
   (use-package windmove
     :config
-    (windmove-default-keybindings 'super))
+    (windmove-default-keybindings 'hyper)
+    (windmove-swap-states-default-keybindings '(hyper shift)))
+
+  ;; (windmove-delete-default-keybindings)
+  ;; (windmove-display-default-keybindings)
 #+end_src
 
 *** fwb-cmds
@@ -887,7 +888,7 @@ write-region binding:
 ** Programming
 
 #+begin_src emacs-lisp
-  ;; (use-package geiser-mit 
+  ;; (use-package geiser-mit
 
   ;;   :config
   ;;   (setq geiser-racket-binary (executable-find "Racket")))
@@ -897,7 +898,7 @@ write-region binding:
   ;;   ;:load-path "~/code/emacs/ultra-scroll-mac" ; if you git clone'd instead of package-vc-install
   ;;   :init
   ;;   (setq scroll-conservatively 101 ; important!
-  ;;         scroll-margin 0) 
+  ;;         scroll-margin 0)
   ;;   :config
   ;;   (ultra-scroll-mac-mode 1))
 
@@ -931,7 +932,7 @@ write-region binding:
 
 #+begin_src emacs-lisp
   (use-package tree-sitter-langs
-    
+
     :after tree-sitter
     :config
     (tree-sitter-langs-install-grammars :skip-if-installed))
@@ -975,7 +976,7 @@ write-region binding:
             ;; store a reference to the current *other* buffer; relying
             ;; on `other-buffer' alone wouldn't be wise as it would never work
             ;; if a user were to switch away from the inferior Python
-            ;; process to a buffer that isn't our current one. 
+            ;; process to a buffer that isn't our current one.
             (switch-to-buffer python-buffer)
             (setq python-last-buffer (other-buffer)))
         ;; switch back to the last `python-mode' buffer, but only if it
@@ -1005,6 +1006,16 @@ write-region binding:
     :ensure t
     :mode("\\.rkt?\\'" . racket-mode)
     :custom (racket-program "/Applications/Racket v8.15/bin/racket"))
+#+end_src
+
+*** fill-column-indicator
+
+#+begin_src emacs-lisp
+  (use-package display-fill-column-indicator
+    :custom (display-fill-column-indicator-character nil)
+    :custom-face (fill-column-indicator
+                  ((t (:height 1.0 :foreground "grey"))))
+    :hook (prog-mode . display-fill-column-indicator-mode))
 #+end_src
 
 ** pdf-tools
