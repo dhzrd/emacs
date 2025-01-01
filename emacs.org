@@ -626,6 +626,23 @@ write-region binding:
              ("f" . write-region))
 #+end_src
 
+*** goto-chg
+
+#+begin_src emacs-lisp
+  (use-package goto-chg
+    :ensure t
+    :bind ("H-/" . goto-last-change))
+#+end_src
+
+*** move-text
+
+#+begin_src emacs-lisp
+  (use-package move-text
+    :ensure t
+    :bind (("s-p" . move-text-up)
+           ("s-n" . move-text-down)))
+#+end_src
+
 *** comment-dwim-2
 
 #+begin_src emacs-lisp
