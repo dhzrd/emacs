@@ -1072,23 +1072,6 @@ https://github.com/kisaragi-hiu/info-variable-pitch
     )
 #+end_src
 
-** buffer-flip
-
-#+begin_src emacs-lisp :tangle no
-  (use-package buffer-flip
-    
-    :bind  (("M-\\" . buffer-flip)	; originally delete-horizontal-space
-            :map buffer-flip-map
-            ( "M-\\" .   buffer-flip-forward) 
-            ( "M-|" . buffer-flip-backward) ; originally shell-command-on-region
-            ( "M-ESC" .     buffer-flip-abort))
-    ;; :config
-    ;; (setq buffer-flip-skip-patterns
-    ;;       '("^\\*helm\\b"
-    ;;         "^\\*swiper\\*$"))
-    )
-#+end_src
-
 ** Footer
 
 #+begin_src emacs-lisp
