@@ -298,13 +298,13 @@
   :config
   (which-key-mode))
 
-(use-package transient)
-
 (use-package yasnippet
+  :disabled
   :config
   (yas-global-mode 1))
 
 (use-package yasnippet-snippets
+  :disabled
   :after yasnippet)
 
 (use-package hippie-exp
