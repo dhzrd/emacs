@@ -14,7 +14,7 @@ This ~org~ file tangles to two different ~emacs-lisp~ files in the same director
 :header-args: :tangle early-init.el
 :END:
 
-Emacs loads this file before loading the GUI and package system.[fn:1] Here we declare what GUI elements we want to prevent from initializing. It's also a good place for settings having to do how Emacs compiles Lisp into native code.[fn:2]
+Emacs loads this file before loading the GUI and package system. Here we declare what GUI elements we want to prevent from initializing. It's also a good place for settings having to do how Emacs compiles Lisp into native code.
 
 ** Header
 
@@ -273,7 +273,7 @@ With a laptop keyboard you have to be inventive if you want ergonomic modifier k
 
 In the far left column are keys or keycodes as they are defined by the Macbook at the hardware and system level. In the two middle columns are the corresponding remappings as we configure them in Karabiner. The middle left column contains the keycodes sent by the physical keys when they are pressed individually. (It would be more precise to say when they are pressed and released before another key is pressed.) In the middle right column we see the keycodes sent by the physical keys when they are pressed and held in combination with another key press. Finally in the far right column are the modifier keys assigned within Emacs to the keycodes just described.
 
-A few more things are worth pointing out. The Macbook Air keyboard has an Option key and a Command key on either side of the spacebar. This is great because it means that each thumb can have equal access to a Meta key and Super key. But this creates a problem because, by redefining the two Option keys as Meta keys in Emacs we lose access within Emacs to the dead key and alternate character map that the OS puts behind the Option keys. The way around this is to unbind one of the Option keys and assign it the keycode of the other Option key. (This is possible because MacOS in fact distinguishes between right and left modifier keycodes.) Using Karabiner, we configure the two Option keys to send the same keycode to the OS (in this case, ~left_option~ in Karabiner's notation) and remap the remaining keycode (in this case, ~right_option~) to a different (physical) key, such as Escape. Then within Emacs we disable ~right_option~ as a modifier key so that we are able to send the ~right_option~ keycode—and which we no longer need for the Meta key—to the OS without Emacs getting in the way because it thinks we are pressing Meta.
+A few more things are worth pointing out. The Macbook Air keyboard has an Option key and a Command key on either side of the spacebar. This is great because it means that each thumb can have equal access to a Meta key anD Super key. But this creates a problem because, by redefining the two Option keys as Meta keys in Emacs we lose access within Emacs to the dead key and alternate character map that the OS puts behind the Option keys. The way around this is to unbind one of the Option keys and assign it the keycode of the other Option key. (This is possible because MacOS in fact distinguishes between right and left modifier keycodes.) Using Karabiner, we configure the two Option keys to send the same keycode to the OS (in this case, ~left_option~ in Karabiner's notation) and remap the remaining keycode (in this case, ~right_option~) to a different (physical) key, such as Escape. Then within Emacs we disable ~right_option~ as a modifier key so that we are able to send the ~right_option~ keycode—and which we no longer need for the Meta key—to the OS without Emacs getting in the way because it thinks we are pressing Meta.
 
 We can also use the existence of left and right modifiers to set up the physical Control key as a Hyper modifier key within Emacs. First, we make sure that when we want to post the Control keycode we are only sending ~left_control~. Then we map the ~right_control~ keycode onto the lone physical Control key. Finally, we tell tell Emacs to interpret ~right_control~ as the Hyper modifier key.
 
@@ -1077,9 +1077,3 @@ https://github.com/kisaragi-hiu/info-variable-pitch
 
   ;;; init.el ends here
 #+end_src
-
-* Footnotes
-
-[fn:1] https://www.gnu.org/software/emacs/manual/html_node/emacs/Early-Init-File
-
-[fn:2] For more on this topic see https://www.gnu.org/software/emacs/manual/html_node/elisp/Native-Compilation.html.
