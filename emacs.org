@@ -52,7 +52,7 @@ Emacs loads this file before loading the GUI and package system. Here we declare
   ;; message at the top of Scratch buffers.
   (scroll-bar-mode -1)
   (tool-bar-mode -1)
-  (setq inhibit-startup-message t) 
+  (setq inhibit-startup-message t)
   (setq initial-scratch-message nil)
 #+end_src
 
@@ -140,7 +140,7 @@ Emacs loads this file before loading the GUI and package system. Here we declare
   (use-package minions
     :custom
     (minions-mode-line-delimiters nil)
-    :config 
+    :config
     (minions-mode 1))
 #+end_src
 
@@ -724,7 +724,7 @@ write-region binding:
     (denote-directory "~/notes/"))
 
   (use-package consult-denote
-    
+
     :bind (("C-c n f" . consult-denote-find)
 	   ("C-c n g" . consult-denote-grep))
     :config
@@ -813,7 +813,7 @@ write-region binding:
                              "*Ibuffer*"
                              "*Warnings*"
                              "*Messages*"
-                             "*Activities (error)"))) 
+                             "*Activities (error)")))
 #+end_src
 
 *** windmove
@@ -873,9 +873,9 @@ write-region binding:
 
 *** dired-x
 
-#+begin_src emacs-lisp :tangle no 
+#+begin_src emacs-lisp :tangle no
   (use-package dired-x
-    
+
     :config
     (dired-omit-mode 1)
     :custom
@@ -1055,7 +1055,7 @@ https://github.com/kisaragi-hiu/info-variable-pitch
 
 #+begin_src emacs-lisp
   (use-package info-variable-pitch
-    
+
     :hook (info-mode . info-variable-pitch-mode))
 #+end_src
 
