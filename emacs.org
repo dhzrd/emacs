@@ -847,12 +847,15 @@ write-region binding:
     (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
 #+end_src
 
-*** zoom-window
+*** Ibuffer
 
 #+begin_src emacs-lisp
-  (use-package zoom-window
+  (use-package ibuffer
+    :ensure nil
+    :bind ([remap list-buffers] . ibuffer)) ; C-x C-b
 
-    :bind ("C-\\" . zoom-window-zoom))	; originally toggleinput-method
+  (use-package ibuffer-vc
+    :after ibuffer)
 #+end_src
 
 ** dired
