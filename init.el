@@ -104,7 +104,7 @@
   (org-modern-hide-stars nil)		; adds extra indentation
   (org-modern-block-name '("" . ""))
   (org-modern-fold-stars
-   '(("►" . "▼") ("►" . "▼") ("►" . "▼") ("►" . "▼") ("►" . "▼")))
+   '(("◼" . "◻") ("◼" . "◻") ("◼" . "◻") ("◼" . "◻") ("◼" . "◻")))
   :hook
   (org-mode . org-modern-mode))
 
