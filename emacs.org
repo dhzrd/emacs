@@ -693,26 +693,29 @@ write-region binding:
 #+end_src
 
 *** vundo
+
 #+begin_src emacs-lisp
   (use-package vundo
     :ensure t
     :bind (("C-x u" . vundo)
            ("H-/" . vundo)))
 #+end_src
-*** expreg
-#+begin_src emacs-lisp :tangle no
-  (use-package expreg
+
+*** expand-region
+
+#+begin_src emacs-lisp
+  (use-package expand-region
     :ensure t
     :bind
-    ("s-m" . expreg-expand)		; †iconify-frame
-    ("s-n" . expreg-contract))		; †make-frame
+    ("s-o" . er/expand-region)
+    ("s-i" . er/contract-region))
 #+end_src
 
 *** denote
 
 #+begin_src emacs-lisp
   (use-package denote
-    
+
     :bind (("C-c n n" . denote)
 	   ("C-c n s" . denote-subdirectory)
 	   ("C-c n i" . denote-link)
