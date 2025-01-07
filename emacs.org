@@ -132,9 +132,16 @@ Emacs loads this file before loading the GUI and package system. Here we declare
     :config
     (add-to-list 'package-archives ; the default list contains ELPA and non-GNU ELPA
                  '("melpa" . "https://melpa.org/packages/") t))
+
+
+  (use-package exec-path-from-shell
+    :ensure t
+    :if (memq window-system '(mac ns))
+    :config
+    (exec-path-from-shell-initialize))
 #+end_src
 
-** mode-line
+** Mode-line, faces, and fonts
 
 #+begin_src emacs-lisp
   (use-package minions
