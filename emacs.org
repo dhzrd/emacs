@@ -1049,6 +1049,18 @@ write-region binding:
     :hook (prog-mode . display-fill-column-indicator-mode))
 #+end_src
 
+*** javascript
+
+#+begin_src emacs-lisp
+  (use-package nodejs-repl
+    :ensure t
+    :if (executable-find "node")
+    :bind (:map js-mode-map
+                ("C-c C-z" . nodejs-repl-switch-to-repl)
+                ("C-x C-e" . nodejs-repl-send-last-expression)
+                ("C-c C-b" . nodejs-repl-send-buffer)
+                ("C-c C-r" . nodejs-repl-send-region)))
+#+end_src
 ** pdf-tools
 
 #+begin_src emacs-lisp
