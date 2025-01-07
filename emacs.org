@@ -202,6 +202,7 @@ Emacs loads this file before loading the GUI and package system. Here we declare
 
 #+begin_src emacs-lisp
   (use-package mixed-pitch
+    :disabled
     :hook
     ;; If you want it in all text modes:
     (text-mode . mixed-pitch-mode))
@@ -903,39 +904,33 @@ write-region binding:
 #+end_src
 
 ** dired
+
 #+begin_src emacs-lisp
-  (setq dired-dwim-target t)
-#+end_src
-*** dired+
-#+begin_src emacs-lisp :tangle no
-  (use-package dired+)
-#+end_src
+  (use-package dired
+    :ensure nil
+    :custom
+    (delete-by-moving-to-trash t)
+    (dired-dwim-target t)
+    (load-prefer-newer t))
 
-*** casual-dired
-#+begin_src emacs-lisp :tangle no
-  (use-package casual-dired
-    :commands casual-dired-tmenu
-    :bind (:map dired-mode-map ("C-z d h" . #'casual-dired-tmenu)))
-#+end_src
+  (use-package dired-aux
+    :ensure nil
+    :after dired)
 
-*** dired-x
-
-#+begin_src emacs-lisp :tangle no
   (use-package dired-x
-
-    :config
-    (dired-omit-mode 1)
+    :ensure nil
+    :disabled
+    :after dired-aux
+    :hook
+    (dired-mode . dired-omit-mode)
     :custom
     (dired-omit-extensions ".DS_Store")
     (dired-find-subdir t))
-#+end_src
 
-*** dired-open-with
-
-#+begin_src emacs-lisp
-  (use-package reveal-in-osx-finder
+  (use-package dired-plus
     :ensure t
-    :bind ("H-f" . reveal-in-osx-finder))
+    :disabled
+    :after dired-x)
 #+end_src
 
 ** Version Control
