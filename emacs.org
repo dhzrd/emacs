@@ -292,7 +292,7 @@ We can also use the existence of left and right modifiers to set up the physical
 
 *** Karabiner
 
-#+begin_src js :tangle no
+#+begin_src json :tangle no :tangle ~/.config/karabiner/karabiner.json
   {
       "profiles": [
           {
@@ -350,7 +350,7 @@ We can also use the existence of left and right modifiers to set up the physical
   }
 #+end_src
 
-*** modifiers keys on macos
+**** modifiers keys on macos
 
 #+begin_src emacs-lisp
   (use-package ns-win
@@ -1085,6 +1085,15 @@ write-region binding:
                 ("C-c C-b" . nodejs-repl-send-buffer)
                 ("C-c C-r" . nodejs-repl-send-region)))
 #+end_src
+
+*** json
+
+#+begin_src emacs-lisp
+  (use-package json-mode
+    :ensure t
+    :mode "\\.json\\'")
+#+end_src
+
 ** pdf-tools
 
 #+begin_src emacs-lisp
