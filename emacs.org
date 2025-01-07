@@ -187,10 +187,15 @@ Emacs loads this file before loading the GUI and package system. Here we declare
 ** Fonts and other styles
 
 #+begin_src emacs-lisp
-  (set-face-attribute 'default nil :font "Input Mono")
-  (set-face-attribute 'fixed-pitch nil :font "Input Mono" :height 1.0)
-  (set-face-attribute 'variable-pitch nil :font "Input Sans" :height 1.0)
+  ;; (set-face-attribute 'default nil :font "Input Mono")
+  ;; (set-face-attribute 'fixed-pitch nil :font "Input Mono" :height 1.0)
+  ;; (set-face-attribute 'variable-pitch nil :font "Input Sans" :height 1.0)
   (global-visual-line-mode 1)
+
+  (when (member "Input Mono Narrow" (font-family-list))
+    (set-face-attribute 'default nil :font "Input Mono Narrow" :height 120)
+    (set-face-attribute 'fixed-pitch nil :font "Input Mono Narrow"))
+
 #+end_src
 
 *** mixed-pitch-mode
