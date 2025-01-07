@@ -679,9 +679,8 @@ write-region binding:
 #+begin_src emacs-lisp
   (use-package avy
     :ensure t
-    :bind 
-    ("s-i" . avy-goto-char)
-    ("s-f" . avy-goto-char-timer))
+    :bind
+    ("s-q" . avy-goto-char-timer))
 #+end_src
 
 **** avy-zap
@@ -719,8 +718,8 @@ write-region binding:
   (use-package expand-region
     :ensure t
     :bind
-    ("s-o" . er/expand-region)
-    ("s-i" . er/contract-region))
+    ("s-=" . er/expand-region)
+    ("s-+" . er/contract-region))
 #+end_src
 
 *** denote
