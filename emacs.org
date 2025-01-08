@@ -893,27 +893,11 @@ write-region binding:
 ** Programming
 
 #+begin_src emacs-lisp
-  ;; (use-package geiser-mit
-
-  ;;   :config
-  ;;   (setq geiser-racket-binary (executable-find "Racket")))
-
-  ;; (use-package ultra-scroll-mac
-  ;;   :if (eq window-system 'mac)
-  ;;   ;:load-path "~/code/emacs/ultra-scroll-mac" ; if you git clone'd instead of package-vc-install
-  ;;   :init
-  ;;   (setq scroll-conservatively 101 ; important!
-  ;;         scroll-margin 0)
-  ;;   :config
-  ;;   (ultra-scroll-mac-mode 1))
-
-
-  (use-package py-vterm-interaction
-    :hook (python-mode . py-vterm-interaction-mode)
-    :custom
-    (py-vterm-interaction-repl-program "ipython -i")
-    (py-vterm-interaction-silent-cells t))
+  (use-package elec-pair
+    :ensure nil
+    :hook ((js-mode python-mode) . electric-pair-mode))
 #+end_src
+
 *** paredit
 
 #+begin_src emacs-lisp
@@ -1004,6 +988,16 @@ write-region binding:
            :map inferior-python-mode-map ("s-o" . toggle-between-python-buffers)))
 #+end_src
 
+**** py-vterm
+
+#+begin_src emacs-lisp
+  (use-package py-vterm-interaction
+      :hook (python-mode . py-vterm-interaction-mode)
+      :custom
+      (py-vterm-interaction-repl-program "ipython -i")
+      (py-vterm-interaction-silent-cells t))
+#+end_src
+
 *** racket
 
 #+begin_src emacs-lisp
@@ -1016,6 +1010,13 @@ write-region binding:
 *** javascript
 
 #+begin_src emacs-lisp
+  (use-package js
+    :ensure nil
+    :mode "\\.js\\'")
+#+end_src
+
+**** nodejs-repl
+#+begin_src emacs-lisp
   (use-package nodejs-repl
     :ensure t
     :if (executable-find "node")
@@ -1023,7 +1024,8 @@ write-region binding:
                 ("C-c C-z" . nodejs-repl-switch-to-repl)
                 ("C-x C-e" . nodejs-repl-send-last-expression)
                 ("C-c C-b" . nodejs-repl-send-buffer)
-                ("C-c C-r" . nodejs-repl-send-region)))
+                ("C-c C-r" . nodejs-repl-send-region))
+    :hook ((js-mode js-ts-mode) . nodejs-repl-minor-mode))
 #+end_src
 
 *** json
