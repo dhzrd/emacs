@@ -1,1 +1,0 @@
-/Users/danielhazard/.config/emacs/emacs.org
