@@ -591,6 +591,26 @@ Below is my configuration for Karabiner in order to achieve the layout described
            ([backtab] . tempel-previous)))
 #+end_src
 
+**** Templates
+
+#+begin_src emacs-lisp :tangle (locate-user-emacs-file "etc/templates/tempo.eld")
+  emacs-lisp-mode
+
+  (usep "(use-package " p n> ":ensure " p ")" n>)
+
+  js-base-mode typescript-ts-base-mode
+
+  (cl "console.log(" p ")" p)
+#+end_src
+
+***** tempel-collection
+
+#+begin_src emacs-lisp
+  (use-package tempel-collection
+    :ensure t
+    :after tempel)
+#+end_src
+
 ** Windows, buffers, and tabs
 *** Line-wrapping
 
