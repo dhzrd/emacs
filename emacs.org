@@ -109,7 +109,8 @@ Emacs loads this file before loading the GUI and package system. Here we declare
   ;;; Code:
 #+end_src
 
-** no-littering
+** Paths, user-directory, and packages
+*** no-littering
 
 #+begin_src emacs-lisp
   (use-package no-littering
@@ -125,15 +126,19 @@ Emacs loads this file before loading the GUI and package system. Here we declare
           (expand-file-name "custom.el" user-emacs-directory)))
 #+end_src
 
-** Package management
+*** Package archives
 
 #+begin_src emacs-lisp
   (use-package package
+    :ensure nil
     :config
     (add-to-list 'package-archives ; the default list contains ELPA and non-GNU ELPA
                  '("melpa" . "https://melpa.org/packages/") t))
+#+end_src
 
+*** exec-path-from-shell
 
+#+begin_src emacs-lisp
   (use-package exec-path-from-shell
     :ensure t
     :if (memq window-system '(mac ns))
@@ -141,132 +146,8 @@ Emacs loads this file before loading the GUI and package system. Here we declare
     (exec-path-from-shell-initialize))
 #+end_src
 
-** Mode-line, faces, and fonts
-
-#+begin_src emacs-lisp
-  (use-package minions
-    :custom
-    (minions-mode-line-delimiters nil)
-    :config
-    (minions-mode 1))
-#+end_src
-
-#+begin_src emacs-lisp
-  (use-package mood-line
-    :after minions
-    :preface
-    (defun my/mood-line-segment-major-mode ()
-      "Return the name of the major mode of the current buffer."
-      (concat (format-mode-line minions-mode-line-modes 'mood-line-major-mode) ""))
-    :custom
-    (mood-line-glyph-alist mood-line-glyphs-unicode)
-    (mood-line-format
-     (mood-line-defformat
-      :left
-      (((mood-line-segment-buffer-status) . " ")
-       ((mood-line-segment-buffer-name)   . " : ")
-       (my/mood-line-segment-major-mode)
-       (mood-line-segment-vc)         . "  ")
-      :right
-      (((mood-line-segment-scroll)             . " ")
-       ((mood-line-segment-cursor-position)    . "  ")
-       ((when (mood-line-segment-checker) "|") . "  ")
-       ((mood-line-segment-checker)            . "  ")))
-    :config
-    (mood-line-mode)))
-
-#+end_src
-
-*** mode-line-bell
-
-#+begin_src emacs-lisp
-  (use-package mode-line-bell
-    :init (mode-line-bell-mode))
-#+end_src
-
-** Fonts and other styles
-
-#+begin_src emacs-lisp
-  ;; (set-face-attribute 'default nil :font "Input Mono")
-  ;; (set-face-attribute 'fixed-pitch nil :font "Input Mono" :height 1.0)
-  ;; (set-face-attribute 'variable-pitch nil :font "Input Sans" :height 1.0)
-  (global-visual-line-mode 1)
-
-  (when (member "Input Mono Narrow" (font-family-list))
-    (set-face-attribute 'default nil :font "Input Mono Narrow" :height 120)
-    (set-face-attribute 'fixed-pitch nil :font "Input Mono Narrow"))
-
-#+end_src
-
-*** mixed-pitch-mode
-
-#+begin_src emacs-lisp
-  (use-package mixed-pitch
-    :disabled
-    :hook
-    ;; If you want it in all text modes:
-    (text-mode . mixed-pitch-mode))
-#+end_src
-
-** org-mode
-
-#+begin_src emacs-lisp
-  (use-package org
-    :custom
-    (org-startup-indented t)
-    (org-ellipsis " …")
-    ;; Remove underline from org-ellipsis just defined.
-    (set-face-underline 'org-ellipsis nil)
-    (org-catch-invisible-edits 'show-and-error)
-    (org-special-ctrl-a/e t)
-    (org-insert-heading-respect-content t)
-    (org-hide-emphasis-markers t)
-    (org-pretty-entities t)
-    :hook (org-mode . visual-line-mode)
-    :bind
-    ("H-o t" . org-babel-tangle-file)
-    (:prefix-map my-org-narrowing-prefix-map
-                 :prefix "s-n"
-                 :prefix-docstring
-                 "Prefix map for narrowing commands in Org-mode."
-                 ("s" . org-narrow-to-subtree)
-                 ("b" . org-narrow-to-block)
-                 ("w" . widen)))
-#+end_src
-
-*** org-modern
-
-#+begin_src emacs-lisp
-  (use-package org-modern
-    :after org
-    :custom
-    (org-modern-hide-stars nil)		; adds extra indentation
-    (org-modern-block-name '("" . ""))
-    (org-modern-fold-stars
-     '(("►" . "▼") ("►" . "▼") ("►" . "▼") ("►" . "▼") ("►" . "▼")))
-    :hook
-    (org-mode . org-modern-mode))
-#+end_src
-
-**** org-modern-indent
-
-#+begin_src emacs-lisp
-  (use-package org-modern-indent
-    :after org-modern
-    :config ; add late to hook
-    (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
-#+end_src
-
-*** org-tidy
-
-#+begin_src emacs-lisp :tangle no
-  (use-package org-tidy
-    
-    :hook
-    (org-mode . org-tidy-mode))
-#+end_src
-
 ** Keyboard, keybinds, keymaps
+
 
 With a laptop keyboard you have to be inventive if you want ergonomic modifier keys in Emacs. Here is one way to create a symmetrical layout on a Macbook Air keyboard with Control keys at either end of the homerow and Super and Meta keys under each thumb.
 
@@ -291,6 +172,8 @@ A few more things are worth pointing out. The Macbook Air keyboard has an Option
 We can also use the existence of left and right modifiers to set up the physical Control key as a Hyper modifier key within Emacs. First, we make sure that when we want to post the Control keycode we are only sending ~left_control~. Then we map the ~right_control~ keycode onto the lone physical Control key. Finally, we tell tell Emacs to interpret ~right_control~ as the Hyper modifier key.
 
 *** Karabiner
+
+Below is my configuration for Karabiner in order to achieve the layout described above. This source block tangles to ~karabiner.json~ in my dotfiles. (This is of course has nothing to do with Emacs. I include the ~json~ file here because it's convenient to do so.)
 
 #+begin_src json :tangle no :tangle ~/.config/karabiner/karabiner.json
   {
@@ -392,6 +275,78 @@ We can also use the existence of left and right modifiers to set up the physical
     ;; at 'M-Z'. But see 'avy-zap' further below.
     ("M-z" . zap-up-to-char)
     ("s-y" . duplicate-dwim))		; †ns-paste-secondary
+#+end_src
+
+** Mode-line, faces, and fonts
+*** minions
+
+#+begin_src emacs-lisp
+  (use-package minions
+    :custom
+    (minions-mode-line-delimiters nil)
+    :config
+    (minions-mode 1))
+#+end_src
+
+*** mood-line
+
+#+begin_src emacs-lisp
+  (use-package mood-line
+    :disabled
+    :after minions
+    :preface
+    (defun my/mood-line-segment-major-mode ()
+      "Return the name of the major mode of the current buffer."
+      (concat (format-mode-line minions-mode-line-modes 'mood-line-major-mode) ""))
+    :custom
+    (mood-line-glyph-alist mood-line-glyphs-unicode)
+    (mood-line-format
+     (mood-line-defformat
+      :left
+      (((mood-line-segment-buffer-status) . " ")
+       ((mood-line-segment-buffer-name)   . " : ")
+       (my/mood-line-segment-major-mode)
+       (mood-line-segment-vc)         . "  ")
+      :right
+      (((mood-line-segment-scroll)             . " ")
+       ((mood-line-segment-cursor-position)    . "  ")
+       ((when (mood-line-segment-checker) "|") . "  ")
+       ((mood-line-segment-checker)            . "  ")))
+    :config
+    (mood-line-mode)))
+
+#+end_src
+
+*** mode-line-bell
+
+#+begin_src emacs-lisp
+  (use-package mode-line-bell
+    :init (mode-line-bell-mode))
+#+end_src
+
+*** Fonts and other styles
+
+#+begin_src emacs-lisp
+  (when (member "Input Mono Narrow" (font-family-list))
+    (set-face-attribute 'default nil :font "Input Mono Narrow" :height 120)
+    (set-face-attribute 'fixed-pitch nil :font "Input Mono Narrow"))
+#+end_src
+
+**** mixed-pitch-mode
+
+#+begin_src emacs-lisp
+  (use-package mixed-pitch
+    :disabled
+    :hook
+    ;; If you want it in all text modes:
+    (text-mode . mixed-pitch-mode))
+#+end_src
+
+**** info-variable-pitch
+
+#+begin_src emacs-lisp
+  (use-package info-variable-pitch
+    :hook (info-mode . info-variable-pitch-mode))
 #+end_src
 
 ** Completion and the minibuffer
@@ -632,151 +587,20 @@ We can also use the existence of left and right modifiers to set up the physical
            ([backtab] . tempel-previous)))
 #+end_src
 
-** Writing, editing, and navigation
-
-#+begin_src emacs-lisp
-  ;; from http://whattheemacsd.com/editing-defuns.el-02.html
-  (defun move-line-down ()
-    (interactive)
-    (let ((col (current-column)))
-      (save-excursion
-        (forward-line)
-        (transpose-lines 1))
-      (forward-line)
-      (move-to-column col)))
-  (bind-key "C-s-<down>" 'move-line-down)
-
-  (defun move-line-up ()
-    (interactive)
-    (let ((col (current-column)))
-      (save-excursion
-        (forward-line)
-        (transpose-lines -1))
-      (move-to-column col)))
-  (bind-key "C-s-<up>" 'move-line-up)
-#+end_src
-
-More ergonomic binding for beginning/end of buffer:
-#+begin_src emacs-lisp
-  (bind-key "s-a" 'beginning-of-buffer)
-  (bind-key "s-e" 'end-of-buffer)
-#+end_src
-
-write-region binding:
-#+begin_src emacs-lisp
-  (bind-keys :prefix-map my-hyper-x-prefix-map
-             :prefix "H-x"
-             ("f" . write-region))
-#+end_src
-
-*** goto-chg
-
-#+begin_src emacs-lisp
-  (use-package goto-chg
-    :ensure t
-    :bind ("H-/" . goto-last-change))
-#+end_src
-
-*** move-text
-
-#+begin_src emacs-lisp
-  (use-package move-text
-    :ensure t
-    :bind (("s-p" . move-text-up)
-           ("s-n" . move-text-down)))
-#+end_src
-
-*** comment-dwim-2
-
-#+begin_src emacs-lisp
-  (use-package comment-dwim-2
-    :ensure t
-    :demand
-    :bind
-    ("s-;" . comment-dwim-2))
-#+end_src
-
-*** ws-butler
-
-#+begin_src emacs-lisp
-  (use-package ws-butler
-    :ensure t
-    :hook ((text-mode . ws-butler-mode)
-           (prog-mode . ws-butler-mode)))
-#+end_src
-
-*** avy
-
-#+begin_src emacs-lisp
-  (use-package avy
-    :ensure t
-    :bind
-    ("s-q" . avy-goto-char-timer))
-#+end_src
-
-**** avy-zap
-
-#+begin_src emacs-lisp
-  (use-package avy-zap
-    :after avy
-    :ensure t
-    :bind
-    ([remap zap-up-to-char] . avy-zap-up-to-char-dwim)
-    ([remap zap-to-char] . avy-zap-to-char-dwim))
-#+end_src
-
-*** ace-link
-
-#+begin_src emacs-lisp
-  (use-package ace-link
-    :ensure t
-    :config
-    (ace-link-setup-default))
-#+end_src
-
-*** vundo
-
-#+begin_src emacs-lisp
-  (use-package vundo
-    :ensure t
-    :bind (("C-x u" . vundo)
-           ("H-/" . vundo)))
-#+end_src
-
-*** expand-region
-
-#+begin_src emacs-lisp
-  (use-package expand-region
-    :ensure t
-    :bind
-    ("s-=" . er/expand-region)
-    ("s-+" . er/contract-region))
-#+end_src
-
-*** denote
-
-#+begin_src emacs-lisp
-  (use-package denote
-
-    :bind (("C-c n n" . denote)
-	   ("C-c n s" . denote-subdirectory)
-	   ("C-c n i" . denote-link)
-	   ("C-c n l" . denote-link-find-file)
-	   ("C-c n b" . denote-link-backlinks))
-    :hook
-    (dired-mode . denote-dired-mode)
-    :custom
-    (denote-directory "~/notes/"))
-
-  (use-package consult-denote
-
-    :bind (("C-c n f" . consult-denote-find)
-	   ("C-c n g" . consult-denote-grep))
-    :config
-    (consult-denote-mode 1))
-#+end_src
-
 ** Windows, buffers, and tabs
+*** Line-wrapping
+
+#+begin_src emacs-lisp
+  (global-visual-line-mode 1)
+
+  (use-package display-fill-column-indicator
+    :ensure nil
+    :custom (display-fill-column-indicator-character nil)
+    :custom-face (fill-column-indicator
+                  ((t (:height 1.0 :foreground "grey"))))
+    :hook (prog-mode . display-fill-column-indicator-mode))
+#+end_src
+
 *** tab-bar
 #+begin_src emacs-lisp
   (use-package tab-bar
@@ -903,41 +727,132 @@ write-region binding:
     :after ibuffer)
 #+end_src
 
-** dired
+*** olivetti-mode
 
 #+begin_src emacs-lisp
-  (use-package dired
-    :ensure nil
-    :custom
-    (delete-by-moving-to-trash t)
-    (dired-dwim-target t)
-    (load-prefer-newer t))
-
-  (use-package dired-aux
-    :ensure nil
-    :after dired)
-
-  (use-package dired-x
-    :ensure nil
-    :disabled
-    :after dired-aux
-    :hook
-    (dired-mode . dired-omit-mode)
-    :custom
-    (dired-omit-extensions ".DS_Store")
-    (dired-find-subdir t))
-
-  (use-package dired-plus
-    :ensure t
-    :disabled
-    :after dired-x)
+  (use-package olivetti)
 #+end_src
 
-** Version Control
-*** magit
+** Writing, editing, and buffer navigation
+
+More ergonomic binding for beginning/end of buffer:
 #+begin_src emacs-lisp
-  (use-package magit
-    :bind ("H-g" . magit-status))
+  (bind-key "s-a" 'beginning-of-buffer)
+  (bind-key "s-e" 'end-of-buffer)
+#+end_src
+
+write-region binding:
+#+begin_src emacs-lisp
+  (bind-keys :prefix-map my-hyper-x-prefix-map
+             :prefix "H-x"
+             ("f" . write-region))
+#+end_src
+
+*** goto-chg
+
+#+begin_src emacs-lisp
+  (use-package goto-chg
+    :ensure t
+    :bind ("H-/" . goto-last-change))
+#+end_src
+
+*** move-text
+
+#+begin_src emacs-lisp
+  (use-package move-text
+    :ensure t
+    :bind (("s-p" . move-text-up)
+           ("s-n" . move-text-down)))
+#+end_src
+
+*** comment-dwim-2
+
+#+begin_src emacs-lisp
+  (use-package comment-dwim-2
+    :ensure t
+    :demand
+    :bind
+    ("s-;" . comment-dwim-2))
+#+end_src
+
+*** ws-butler
+
+#+begin_src emacs-lisp
+  (use-package ws-butler
+    :ensure t
+    :hook ((text-mode . ws-butler-mode)
+           (prog-mode . ws-butler-mode)))
+#+end_src
+
+*** avy
+
+#+begin_src emacs-lisp
+  (use-package avy
+    :ensure t
+    :bind
+    ("s-q" . avy-goto-char-timer))
+#+end_src
+
+**** avy-zap
+
+#+begin_src emacs-lisp
+  (use-package avy-zap
+    :after avy
+    :ensure t
+    :bind
+    ([remap zap-up-to-char] . avy-zap-up-to-char-dwim)
+    ([remap zap-to-char] . avy-zap-to-char-dwim))
+#+end_src
+
+*** ace-link
+
+#+begin_src emacs-lisp
+  (use-package ace-link
+    :ensure t
+    :config
+    (ace-link-setup-default))
+#+end_src
+
+*** vundo
+
+#+begin_src emacs-lisp
+  (use-package vundo
+    :ensure t
+    :bind (("C-x u" . vundo)
+           ("H-/" . vundo)))
+#+end_src
+
+*** expand-region
+
+#+begin_src emacs-lisp
+  (use-package expand-region
+    :ensure t
+    :bind
+    ("s-=" . er/expand-region)
+    ("s-+" . er/contract-region))
+#+end_src
+
+*** denote
+
+#+begin_src emacs-lisp
+  (use-package denote
+
+    :bind (("C-c n n" . denote)
+	   ("C-c n s" . denote-subdirectory)
+	   ("C-c n i" . denote-link)
+	   ("C-c n l" . denote-link-find-file)
+	   ("C-c n b" . denote-link-backlinks))
+    :hook
+    (dired-mode . denote-dired-mode)
+    :custom
+    (denote-directory "~/notes/"))
+
+  (use-package consult-denote
+
+    :bind (("C-c n f" . consult-denote-find)
+	   ("C-c n g" . consult-denote-grep))
+    :config
+    (consult-denote-mode 1))
 #+end_src
 
 ** Programming
@@ -1063,16 +978,6 @@ write-region binding:
     :custom (racket-program "/Applications/Racket v8.15/bin/racket"))
 #+end_src
 
-*** fill-column-indicator
-
-#+begin_src emacs-lisp
-  (use-package display-fill-column-indicator
-    :custom (display-fill-column-indicator-character nil)
-    :custom-face (fill-column-indicator
-                  ((t (:height 1.0 :foreground "grey"))))
-    :hook (prog-mode . display-fill-column-indicator-mode))
-#+end_src
-
 *** javascript
 
 #+begin_src emacs-lisp
@@ -1094,7 +999,101 @@ write-region binding:
     :mode "\\.json\\'")
 #+end_src
 
-** pdf-tools
+** Major major modes
+*** org-mode
+
+#+begin_src emacs-lisp
+  (use-package org
+    :custom
+    (org-startup-indented t)
+    (org-ellipsis " …")
+    ;; Remove underline from org-ellipsis just defined.
+    (set-face-underline 'org-ellipsis nil)
+    (org-catch-invisible-edits 'show-and-error)
+    (org-special-ctrl-a/e t)
+    (org-insert-heading-respect-content t)
+    (org-hide-emphasis-markers t)
+    (org-pretty-entities t)
+    :hook (org-mode . visual-line-mode)
+    :bind
+    ("H-o t" . org-babel-tangle-file)
+    (:prefix-map my-org-narrowing-prefix-map
+                 :prefix "s-n"
+                 :prefix-docstring
+                 "Prefix map for narrowing commands in Org-mode."
+                 ("s" . org-narrow-to-subtree)
+                 ("b" . org-narrow-to-block)
+                 ("w" . widen)))
+#+end_src
+
+**** org-modern
+
+#+begin_src emacs-lisp
+  (use-package org-modern
+    :after org
+    :custom
+    (org-modern-hide-stars nil)		; adds extra indentation
+    (org-modern-block-name '("" . ""))
+    (org-modern-fold-stars
+     '(("►" . "▼") ("►" . "▼") ("►" . "▼") ("►" . "▼") ("►" . "▼")))
+    :hook
+    (org-mode . org-modern-mode))
+#+end_src
+
+***** org-modern-indent
+
+#+begin_src emacs-lisp
+  (use-package org-modern-indent
+    :after org-modern
+    :config ; add late to hook
+    (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
+#+end_src
+
+**** org-tidy
+
+#+begin_src emacs-lisp :tangle no
+  (use-package org-tidy
+
+    :hook
+    (org-mode . org-tidy-mode))
+#+end_src
+*** dired
+
+#+begin_src emacs-lisp
+  (use-package dired
+    :ensure nil
+    :custom
+    (delete-by-moving-to-trash t)
+    (dired-dwim-target t)
+    (load-prefer-newer t))
+
+  (use-package dired-aux
+    :ensure nil
+    :after dired)
+
+  (use-package dired-x
+    :ensure nil
+    :disabled
+    :after dired-aux
+    :hook
+    (dired-mode . dired-omit-mode)
+    :custom
+    (dired-omit-extensions ".DS_Store")
+    (dired-find-subdir t))
+
+  (use-package dired-plus
+    :ensure t
+    :disabled
+    :after dired-x)
+#+end_src
+
+*** magit
+#+begin_src emacs-lisp
+  (use-package magit
+    :bind ("H-g" . magit-status))
+#+end_src
+
+*** pdf-tools
 
 #+begin_src emacs-lisp
   (use-package pdf-tools
@@ -1110,23 +1109,6 @@ write-region binding:
     ;; (pdf-tools-install :no-query)
     ;; open pdfs scaled to fit page
     (setq-default pdf-view-display-size 'fit-width))
-#+end_src
-
-** info-variable-pitch
-
-https://github.com/kisaragi-hiu/info-variable-pitch
-
-#+begin_src emacs-lisp
-  (use-package info-variable-pitch
-
-    :hook (info-mode . info-variable-pitch-mode))
-#+end_src
-
-** olivetti-mode
-
-#+begin_src emacs-lisp
-  (use-package olivetti
-    )
 #+end_src
 
 ** Footer
