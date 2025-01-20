@@ -112,7 +112,7 @@ Emacs loads this file before loading the GUI and package system. Here we declare
   ;;; Code:
 #+end_src
 
-** Paths, user-directory, and packages
+** Paths and packages
 *** no-littering
 
 #+begin_src emacs-lisp
@@ -284,82 +284,11 @@ Below is my configuration for Karabiner in order to achieve the layout described
           ("w" . widen)))
 #+end_src
 
-** Mode-line, faces, and fonts
-*** minions
-
-#+begin_src emacs-lisp
-  (use-package minions
-    :custom
-    (minions-mode-line-delimiters nil)
-    :config
-    (minions-mode 1))
-#+end_src
-
-*** mood-line
-
-#+begin_src emacs-lisp
-  (use-package mood-line
-    :disabled
-    :after minions
-    :preface
-    (defun my/mood-line-segment-major-mode ()
-      "Return the name of the major mode of the current buffer."
-      (concat (format-mode-line minions-mode-line-modes 'mood-line-major-mode) ""))
-    :custom
-    (mood-line-glyph-alist mood-line-glyphs-unicode)
-    (mood-line-format
-     (mood-line-defformat
-      :left
-      (((mood-line-segment-buffer-status) . " ")
-       ((mood-line-segment-buffer-name)   . " : ")
-       (my/mood-line-segment-major-mode)
-       (mood-line-segment-vc)         . "  ")
-      :right
-      (((mood-line-segment-scroll)             . " ")
-       ((mood-line-segment-cursor-position)    . "  ")
-       ((when (mood-line-segment-checker) "|") . "  ")
-       ((mood-line-segment-checker)            . "  ")))
-    :config
-    (mood-line-mode)))
-
-#+end_src
-
-*** mode-line-bell
-
-#+begin_src emacs-lisp
-  (use-package mode-line-bell
-    :init (mode-line-bell-mode))
-#+end_src
-
-*** Fonts and other styles
-
-#+begin_src emacs-lisp
-  (when (member "Input Mono Narrow" (font-family-list))
-    (set-face-attribute 'default nil :font "Input Mono Narrow" :height 120)
-    (set-face-attribute 'fixed-pitch nil :font "Input Mono Narrow"))
-#+end_src
-
-**** mixed-pitch-mode
-
-#+begin_src emacs-lisp
-  (use-package mixed-pitch
-    :disabled
-    :hook
-    ;; If you want it in all text modes:
-    (text-mode . mixed-pitch-mode))
-#+end_src
-
-**** info-variable-pitch
-
-#+begin_src emacs-lisp
-  (use-package info-variable-pitch
-    :hook (info-mode . info-variable-pitch-mode))
-#+end_src
-
 ** Completion and the minibuffer
 *** Save recent files
 #+begin_src emacs-lisp
   (use-package recentf
+    :ensure nil
     :config
     ;; (setq recentf-exclude '("COMMIT_MSG" "COMMIT_EDITMSG" "github.*txt$"
     ;;                         "[0-9a-f]\\{32\\}-[0-9a-f]\\{32\\}\\.org"
