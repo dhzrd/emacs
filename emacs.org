@@ -299,6 +299,7 @@ Below is my configuration for Karabiner in order to achieve the layout described
 *** Save minibuffer history
 #+begin_src emacs-lisp
   (use-package savehist
+    :ensure nil
     :init
     (savehist-mode))
 #+end_src
@@ -468,7 +469,7 @@ Below is my configuration for Karabiner in order to achieve the layout described
 
 #+begin_src emacs-lisp
   (use-package which-key
-    :ensure t
+    :ensure t 				; must be nil on Emacs 30+
     :config
     (which-key-mode))
 #+end_src
@@ -588,9 +589,12 @@ Below is my configuration for Karabiner in order to achieve the layout described
     (activities-mode)
     (activities-tabs-mode)
     :bind
-    (:map my-super-x-prefix-map
+    ("H-b" . activities-switch-buffer)
+    ("H-/" . activities-revert)
+    ("H-z" . activities-switch)
+    (:map global-map
           :prefix-map my-activities-prefix-map
-          :prefix "s-a"
+          :prefix "H-a"
           :prefix-docstring
           "Prefix keymap for activities-mode."
           ("n" . activities-new)
@@ -697,7 +701,7 @@ Below is my configuration for Karabiner in order to achieve the layout described
   (use-package olivetti)
 #+end_src
 
-** Writing, editing, and buffer navigation
+** Editing and buffer navigation
 
 More ergonomic binding for beginning/end of buffer:
 #+begin_src emacs-lisp
@@ -727,7 +731,8 @@ write-region binding:
 #+begin_src emacs-lisp
   (use-package goto-chg
     :ensure t
-    :bind ("H-/" . goto-last-change))
+    :bind (:map my-super-c-prefix-map
+           ("s-j" . goto-last-change)))
 #+end_src
 
 *** move-text
@@ -803,7 +808,7 @@ write-region binding:
     :ensure t
     :bind
     ("s-=" . er/expand-region)
-    ("s-+" . er/contract-region))
+    ("s--" . er/contract-region))
 #+end_src
 
 *** denote
