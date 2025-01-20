@@ -477,13 +477,15 @@ Below is my configuration for Karabiner in order to achieve the layout described
 
 #+begin_src emacs-lisp
   (use-package yasnippet
-    :disabled
+    :ensure t
     :config
-    (yas-global-mode 1))
+    (yas-global-mode 1)
+    :bind ("H-s" . yas-insert-snippet))
 
   (use-package yasnippet-snippets
-    :disabled
-    :after yasnippet)
+    :ensure t
+    :after yasnippet
+    :pin gnu)
 #+end_src
 
 *** dabbrev/hippie-expand
@@ -497,6 +499,7 @@ Below is my configuration for Karabiner in order to achieve the layout described
 
 #+begin_src emacs-lisp
   (use-package tempel
+    :disabled
     :ensure t
     :preface
     (defun tempel-setup-capf ()
@@ -525,20 +528,24 @@ Below is my configuration for Karabiner in order to achieve the layout described
 
 **** Templates
 
-#+begin_src emacs-lisp :tangle (locate-user-emacs-file "etc/templates/tempo.eld")
+#+begin_src emacs-lisp :tangle no :tangle (locate-user-emacs-file "etc/templates/tempo.eld")
   emacs-lisp-mode
 
   (usep "(use-package " p n> ":ensure " p ")" n>)
 
   js-base-mode typescript-ts-base-mode
 
-  (cl "console.log(" p ")" p)
+  (ccl "console.log(" p ")" p)
+  (ffun "function (" p ") {" n> p n> "}")
+  (ffor "for (" p ") {" n> p n> "}")
+  (iff  "if (" p ") {" n> p n> "}" )
 #+end_src
 
 ***** tempel-collection
 
 #+begin_src emacs-lisp
   (use-package tempel-collection
+    :disabled
     :ensure t
     :after tempel)
 #+end_src
@@ -968,8 +975,7 @@ write-region binding:
     :mode "\\.json\\'")
 #+end_src
 
-** Major major modes
-*** org-mode
+** Org-mode
 
 #+begin_src emacs-lisp
   (use-package org
