@@ -949,7 +949,7 @@ write-region binding:
 *** javascript
 
 #+begin_src emacs-lisp
-  (use-package js
+  (use-package js-mode
     :ensure nil
     :mode "\\.js\\'")
 #+end_src
