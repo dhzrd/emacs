@@ -1026,12 +1026,75 @@ write-region binding:
 
 **** org-tidy
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
   (use-package org-tidy
-
+    :disabled
     :hook
     (org-mode . org-tidy-mode))
 #+end_src
+
+** Documents: reading, writing, exporting
+*** pdf-tools
+
+#+begin_src emacs-lisp
+  (use-package pdf-tools
+
+    :pin manual ;; manually update
+    :mode  ("\\.[pP][dD][fF]\\'" . pdf-view-mode)
+    :bind (:map pdf-view-mode-map
+                ("C-s" . isearch-forward))
+    ;; :init
+    ;; (pdf-loader-install)
+    :config
+    (pdf-loader-install)
+    ;; (pdf-tools-install :no-query)
+    ;; open pdfs scaled to fit page
+    (setq-default pdf-view-display-size 'fit-width))
+#+end_src
+*** nov.el
+
+#+begin_src emacs-lisp
+  (use-package nov
+    :ensure t
+    :mode ("\\.epub\\'" . nov-mode))
+#+end_src
+
+*** typst
+
+Present configuration requires https://github.com/Myriad-Dreamin/tinymist.
+
+**** typst-ts-mode
+
+#+begin_src emacs-lisp
+  (use-package typst-ts-mode
+    ;; https://codeberg.org/meow_king/typst-ts-mode
+    :custom
+    (typst-ts-watch-options "--open")
+    (typst-ts-mode-grammar-location (expand-file-name "tree-sitter/libtree-sitter-typst.so" user-emacs-directory))
+    (typst-ts-mode-enable-raw-blocks-highlight t)
+    :config
+    (keymap-set typst-ts-mode-map "C-c C-c" #'typst-ts-tmenu)
+    ;; The remaining lines are suggested by typst-preview.
+    ;; (add-to-list 'lsp-language-id-configuration '(typst-ts-mode . "typst"))
+    ;; (lsp-register-client
+    ;;  (make-lsp-client
+    ;;   :new-connection (lsp-stdio-connection "typst-lsp")
+    ;;   :major-modes '(typst-ts-mode)
+    ;;   :server-id 'typst-lsp))
+    )
+#+end_src
+
+**** typst-preview
+
+#+begin_src emacs-lisp
+  (use-package typst-preview
+    ;; https://github.com/havarddj/typst-preview.el
+    :config
+    (setq typst-preview-browser "xwidget")
+    (define-key typst-preview-mode-map (kbd "C-c C-j") 'typst-preview-send-position))
+#+end_src
+
+** Version control and file management
 *** dired
 
 #+begin_src emacs-lisp
@@ -1065,25 +1128,16 @@ write-region binding:
 *** magit
 #+begin_src emacs-lisp
   (use-package magit
+    :ensure t
     :bind ("H-g" . magit-status))
 #+end_src
 
-*** pdf-tools
+** Unsorted
+*** websocket
 
 #+begin_src emacs-lisp
-  (use-package pdf-tools
-
-    :pin manual ;; manually update
-    :mode  ("\\.[pP][dD][fF]\\'" . pdf-view-mode)
-    :bind (:map pdf-view-mode-map
-                ("C-s" . isearch-forward))
-    ;; :init
-    ;; (pdf-loader-install)
-    :config
-    (pdf-loader-install)
-    ;; (pdf-tools-install :no-query)
-    ;; open pdfs scaled to fit page
-    (setq-default pdf-view-display-size 'fit-width))
+  (use-package websocket
+    :ensure t)
 #+end_src
 
 ** Footer
