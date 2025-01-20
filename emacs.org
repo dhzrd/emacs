@@ -43,17 +43,20 @@ Emacs loads this file before loading the GUI and package system. Here we declare
 
 #+begin_src emacs-lisp
   ;; Prevent Emacs from loading system window decorations.
-  (add-to-list 'default-frame-alist '(undecorated-round . t))
+  ;; (add-to-list 'default-frame-alist '(undecorated-round . t))
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+  (setopt ns-use-proxy-icon nil)
+  (setopt frame-title-format nil)
 
   ;; Remove outer padding from Emacs frame.
-  (setq frame-resize-pixelwise t)
+  (setopt frame-resize-pixelwise t)
 
   ;; Disable scroll-bar, tool-bar, start-up greeting message, and the help
   ;; message at the top of Scratch buffers.
   (scroll-bar-mode -1)
   (tool-bar-mode -1)
-  (setq inhibit-startup-message t)
-  (setq initial-scratch-message nil)
+  (setopt inhibit-startup-message t)
+  (setopt initial-scratch-message nil)
 #+end_src
 
 ** Native Compilation
