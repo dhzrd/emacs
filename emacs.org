@@ -868,11 +868,92 @@ write-region binding:
 
 *** avy
 
+See especially https://karthinks.com/software/avy-can-do-anything/ and the author's config at https://github.com/karthink/.emacs.d/blob/master/lisp/setup-avy.el. Some of the code below is from the last link.
+
 #+begin_src emacs-lisp
   (use-package avy
     :ensure t
+    :preface
+
+    ;; Define new actions to be called from avy-dispatch-alist.
+
+    (defun avy-action-embark (pt)
+      (unwind-protect
+          (save-excursion
+            (goto-char pt)
+            (embark-act))
+        (select-window
+         (cdr (ring-ref avy-ring 0))))
+      t)
+
+    (defun avy-action-kill-line (pt)
+      (unwind-protect
+          (save-excursion
+            (goto-char pt)
+            (kill-line))
+        (avy-resume))
+      (select-window
+       (cdr (ring-ref avy-ring 0)))
+      t)
+
+    (defun avy-action-copy-whole-line (pt)
+      (save-excursion
+        (goto-char pt)
+        (cl-destructuring-bind (start . end)
+            (bounds-of-thing-at-point 'line)
+          (copy-region-as-kill start end)))
+      (select-window
+       (cdr
+        (ring-ref avy-ring 0)))
+      t)
+
+    (defun avy-action-kill-whole-line (pt)
+      (unwind-protect
+          (save-excursion
+            (goto-char pt)
+            (kill-whole-line)
+            (avy-resume)))
+      (select-window
+       (cdr
+        (ring-ref avy-ring 0)))
+      t)
+
+    (defun avy-action-yank-whole-line (pt)
+      (avy-action-copy-whole-line pt)
+      (save-excursion (yank))
+      t)
+
+    (defun avy-action-teleport-whole-line (pt)
+      (avy-action-kill-whole-line pt)
+      (save-excursion (yank)) t)
+
+    (defun avy-action-mark-to-char (pt)
+      (activate-mark)
+      (goto-char pt))
+
+    :custom
+    ;; When only one candidate is found, DON'T jump to it automatically.
+    (avy-single-candidate-jump nil)
+    (avy-dispatch-alist '((?. . avy-action-embark)
+                          (?= . avy-action-define)
+                          (?M . avy-action-mark-to-char)
+                          (?k . avy-action-kill-line)
+                          (?W . avy-action-copy-whole-line)
+                          (?K . avy-action-kill-whole-line)
+                          (?Y . avy-action-yank-whole-line)
+                          (?T . avy-action-teleport-whole-line)
+                          ;; Default alist below
+                          (?x . avy-action-kill-move)
+                          (?X . avy-action-kill-stay)
+                          (?t . avy-action-teleport)
+                          (?m . avy-action-mark)
+                          (?w . avy-action-copy)
+                          (?y . avy-action-yank)
+                          (?Y . avy-action-yank-line)
+                          (?i . avy-action-ispell)
+                          (?z . avy-action-zap-to-char)))
     :bind
-    ("s-q" . avy-goto-char-timer))
+    ("s-j" . avy-goto-char-timer))	; †exchange-point-and-mark
 #+end_src
 
 **** avy-zap
