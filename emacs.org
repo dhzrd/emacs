@@ -165,8 +165,7 @@ Emacs loads this file before loading the GUI and package system. Here we declare
   (setopt help-window-select t)
 #+end_src
 
-*** GUI, faces, and fonts
-**** ultra-scroll
+*** ultra-scroll
 
 #+begin_src emacs-lisp
   (use-package ultra-scroll
@@ -178,8 +177,8 @@ Emacs loads this file before loading the GUI and package system. Here we declare
     (ultra-scroll-mode 1))
 #+end_src
 
-**** Mode-line
-***** minions
+*** Mode-line
+**** minions
 
 #+begin_src emacs-lisp
   (use-package minions
@@ -188,11 +187,11 @@ Emacs loads this file before loading the GUI and package system. Here we declare
     :config
     (minions-mode 1))
 #+end_src
-***** mood-line
+
+**** mood-line
 
 #+begin_src emacs-lisp
   (use-package mood-line
-    :disabled
     :after minions
     :preface
     (defun my/mood-line-segment-major-mode ()
@@ -217,7 +216,14 @@ Emacs loads this file before loading the GUI and package system. Here we declare
 
 #+end_src
 
-**** Fonts and other styles
+**** mode-line-bell
+
+#+begin_src emacs-lisp
+  (use-package mode-line-bell
+    :ensure t)
+#+end_src
+
+*** Fonts and other styles
 
 #+begin_src emacs-lisp
   ;; (when (member "Input Mono Narrow" (font-family-list))
@@ -239,7 +245,7 @@ Emacs loads this file before loading the GUI and package system. Here we declare
     (text-mode . mixed-pitch-mode))
 #+end_src
 
-***** info-variable-pitch
+**** info-variable-pitch
 
 #+begin_src emacs-lisp
   (use-package info-variable-pitch
