@@ -152,17 +152,24 @@ Emacs loads this file before loading the GUI and package system. Here we declare
 ** Miscellaneous preferences
 
 #+begin_src emacs-lisp
-  (setopt visible-bell t)
-  (setopt confirm-kill-emacs 'yes-or-no-p)
-  (setopt use-short-answers t)
-  (setopt use-dialog-box nil)
-  (setopt use-file-dialog nil)
-  (setopt kill-buffer-query-functions
-          ;; Disable query when kiling buffers with running processes.
-          (remq 'process-kill-buffer-query-function
-                kill-buffer-query-functions))
-  (setopt delete-old-versions t)
-  (setopt help-window-select t)
+  (setopt backup-by-copying t
+          comment-multi-line t
+          confirm-kill-emacs 'yes-or-no-p
+          create-lockfiles nil
+          delete-old-versions t
+          fill-column 80
+          help-window-select t
+          recentf-max-saved-items 500
+          ring-bell-function 'ignore
+          savehist-mode t
+          sentence-end-double-space nil
+          tab-always-indent 'complete
+          uniquify-buffer-name-style 'forward
+          use-dialog-box nil
+          use-file-dialog nil
+          use-short-answers t
+          vc-follow-symlinks t
+          version-control t)
 #+end_src
 
 *** ultra-scroll
