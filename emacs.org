@@ -269,7 +269,6 @@ Emacs loads this file before loading the GUI and package system. Here we declare
 
 ** Keyboard, keybinds, keymaps
 
-
 With a laptop keyboard you have to be inventive if you want ergonomic modifier keys in Emacs. Here is one way to create a symmetrical layout on a Macbook Air keyboard with Control keys at either end of the homerow and Super and Meta keys under each thumb.
 
 | Macbook keys | Karabiner   |             | Emacs   |
@@ -403,25 +402,6 @@ Below is my configuration for Karabiner in order to achieve the layout described
 #+end_src
 
 ** Completion and the minibuffer
-*** Save recent files
-#+begin_src emacs-lisp
-  (use-package recentf
-    :ensure nil
-    :config
-    ;; (setq recentf-exclude '("COMMIT_MSG" "COMMIT_EDITMSG" "github.*txt$"
-    ;;                         "[0-9a-f]\\{32\\}-[0-9a-f]\\{32\\}\\.org"
-    ;;                         ".*png$" ".*cache$"))
-    (setq recentf-max-saved-items 500))
-#+end_src
-
-*** Save minibuffer history
-#+begin_src emacs-lisp
-  (use-package savehist
-    :ensure nil
-    :init
-    (savehist-mode))
-#+end_src
-
 *** vertico
 
 #+begin_src emacs-lisp
@@ -562,9 +542,8 @@ Below is my configuration for Karabiner in order to achieve the layout described
     :init
     (global-corfu-mode)
     :custom
-    ;; Enable indentation+completion using the TAB key.
-    ;; `completion-at-point' is often biound to M-TAB.
-    (tab-always-indent 'complete)
+    
+    
     ;; Hide commands in M-x which do not apply to the current mode.  Corfu
     ;; commands are hidden, since they are not used via M-x. This setting is
     ;; useful beyond Corfu.
@@ -670,11 +649,9 @@ Below is my configuration for Karabiner in order to achieve the layout described
 #+end_src
 
 ** Windows, buffers, and tabs
-*** Line-wrapping
+*** Fill column indicator
 
 #+begin_src emacs-lisp
-  (global-visual-line-mode 1)
-
   (use-package display-fill-column-indicator
     :ensure nil
     :custom (display-fill-column-indicator-character nil)
@@ -1257,6 +1234,7 @@ See especially https://karthinks.com/software/avy-can-do-anything/ and the autho
     ;; open pdfs scaled to fit page
     (setq-default pdf-view-display-size 'fit-width))
 #+end_src
+
 *** nov.el
 
 #+begin_src emacs-lisp
