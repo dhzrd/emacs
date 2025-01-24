@@ -223,23 +223,31 @@ Emacs loads this file before loading the GUI and package system. Here we declare
 
 #+end_src
 
-**** mode-line-bell
-
-#+begin_src emacs-lisp
-  (use-package mode-line-bell
-    :ensure t)
-#+end_src
-
 *** Fonts and other styles
 
 #+begin_src emacs-lisp
-  ;; (when (member "Input Mono Narrow" (font-family-list))
-  ;;   (set-face-attribute 'default nil :font "Input Mono Narrow" :height 120)
-  ;;   (set-face-attribute 'fixed-pitch nil :font "Input Mono Narrow"))
+  (use-package faces
+    :ensure nil
+    :config
+    ;; (when (member "Input Mono Narrow" (font-family-list))
+    ;;   (set-face-attribute 'default nil :font "Input Mono Narrow" :height 120)
+    ;;   (set-face-attribute 'fixed-pitch nil :font "Input Mono Narrow"))
+    (when (member "JetBrains Mono" (font-family-list))
+      (set-face-attribute 'default nil :font "JetBrains Mono" :height 130)
+      (set-face-attribute 'fixed-pitch nil :font "JetBrains Mono")))
+#+end_src
 
-  (when (member "JetBrains Mono" (font-family-list))
-    (set-face-attribute 'default nil :font "JetBrains Mono" :height 130)
-    (set-face-attribute 'fixed-pitch nil :font "JetBrains Mono"))
+**** ligatures
+
+#+begin_src emacs-lisp :tangle yes
+  (use-package ligature
+    :ensure t
+    :if
+    (member "JetBrains Mono" (font-family-list))
+    :config
+    (ligature-set-ligatures 'prog-mode '("--" "---" "==" "===" "!=" "!==" "=!=" "=:=" "=/=" "<=" ">=" "&&" "&&&" "&=" "++" "+++" "***" ";;" "!!" "??" "???" "?:" "?." "?=" "<:" ":<" ":>" ">:" "<:<" "<>" "<<<" ">>>" "<<" ">>" "||" "-|" "_|_" "|-" "||-" "|=" "||=" "##" "###" "####" "#{" "#[" "]#" "#(" "#?" "#_" "#_(" "#:" "#!" "#=" "^=" "<$>" "<$" "$>" "<+>" "<+" "+>" "<*>" "<*" "*>" "</" "</>" "/>" "<!--" "<#--" "-->" "->" "->>" "<<-" "<-" "<=<" "=<<" "<<=" "<==" "<=>" "<==>" "==>" "=>" "=>>" ">=>" ">>=" ">>-" ">-" "-<" "-<<" ">->" "<-<" "<-|" "<=|" "|=>" "|->" "<->" "<~~" "<~" "<~>" "~~" "~~>" "~>" "~-" "-~" "~@" "[||]" "|]" "[|" "|}" "{|" "[<" ">]" "|>" "<|" "||>" "<||" "|||>" "<|||" "<|>" "..." ".." ".=" "..<" ".?" "::" ":::" ":=" "::=" ":?" ":?>" "//" "///" "/*" "*/" "/=" "//=" "/==" "@_" "__" "???" "<:<" ";;;"))
+    (ligature-set-ligatures 'org-mode '("==" "===" "!=" "!==" "=!=" "=:=" "=/=" "<=" ">=" "&&" "&&&" "&=" "++" "+++" ";;" "!!" "??" "???" "?:" "?." "?=" "<:" ":<" ":>" ">:" "<:<" "<>" "<<<" ">>>" "<<" ">>" "||" "-|" "_|_" "|-" "||-" "|=" "||=" "##" "###" "####" "#{" "#[" "]#" "#(" "#?" "#_" "#_(" "#:" "#!" "#=" "^=" "<$>" "<$" "$>" "<+>" "<+" "+>" "<*>" "<*" "*>" "</" "</>" "/>" "<!--" "<#--" "-->" "->" "->>" "<<-" "<-" "<=<" "=<<" "<<=" "<==" "<=>" "<==>" "==>" "=>" "=>>" ">=>" ">>=" ">>-" ">-" "-<" "-<<" ">->" "<-<" "<-|" "<=|" "|=>" "|->" "<->" "<~~" "<~" "<~>" "~~" "~~>" "~>" "~-" "-~" "~@" "[||]" "|]" "[|" "|}" "{|" "[<" ">]" "|>" "<|" "||>" "<||" "|||>" "<|||" "<|>" "..." ".." ".=" "..<" ".?" "::" ":::" ":=" "::=" ":?" ":?>" "//" "///" "/*" "*/" "/=" "//=" "/==" "@_" "__" "???" "<:<" ";;;"))
+    (global-ligature-mode t))
 #+end_src
 
 **** mixed-pitch-mode
