@@ -711,8 +711,9 @@ Below is my configuration for Karabiner in order to achieve the layout described
     :bind (("H-`"   . popper-toggle)
            ("H-<tab>"   . popper-cycle)
            (:map popper-mode-map
-                 ("H-~" . popper-toggle-type)))
+                 ("H-1" . popper-toggle-type)))
     :custom
+    (popper-echo-mode t)
     ;; specify buffer types for popper to control
     (popper-reference-buffers '("Output\\*$"
                                 "\\*Async Shell Command\\*"
@@ -722,8 +723,7 @@ Below is my configuration for Karabiner in order to achieve the layout described
                                 ("\\*Messages\\*" . hide)
                                 ("\\*Warnings\\*" . hide)))
     :hook
-    (after-init . popper-mode)
-    (After-init . popper-echo-mode))
+    (after-init . popper-mode))
 #+end_src
 
 *** winner-mode
