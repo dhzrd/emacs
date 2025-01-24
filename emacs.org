@@ -381,9 +381,9 @@ Below is my configuration for Karabiner in order to achieve the layout described
     (:map global-map
           :prefix-map my-ctrl-z-prefix-map
           :prefix "C-z")
-    (:map global-map
-          :prefix-map my-super-c-prefix-map
-          :prefix "s-c")
+    ;; (:map global-map
+    ;;       :prefix-map my-super-c-prefix-map
+    ;;       :prefix "s-c")
     (:map global-map
           :prefix-map my-super-x-prefix-map
           :prefix "s-x")
@@ -765,7 +765,7 @@ Below is my configuration for Karabiner in order to achieve the layout described
 #+begin_src emacs-lisp
   (use-package fwb-cmds
     :ensure t
-    :bind ("s-'" . fwb-toggle-window-split)) ; †next-window-any-frame
+    :bind ("C-x C-1" . fwb-toggle-window-split)) ; †next-window-any-frame
 #+end_src
 
 *** ace-window
@@ -826,8 +826,7 @@ write-region binding:
 #+begin_src emacs-lisp
   (use-package goto-chg
     :ensure t
-    :bind (:map my-super-c-prefix-map
-           ("s-j" . goto-last-change)))
+    :bind ("s-q" . goto-last-change))
 #+end_src
 
 *** move-text
@@ -983,8 +982,8 @@ See especially https://karthinks.com/software/avy-can-do-anything/ and the autho
   (use-package expand-region
     :ensure t
     :bind
-    ("s-=" . er/expand-region)
-    ("s--" . er/contract-region))
+    ("s-m" . er/expand-region)
+    ("s-M" . er/contract-region))
 #+end_src
 
 *** denote
@@ -1173,13 +1172,14 @@ See especially https://karthinks.com/software/avy-can-do-anything/ and the autho
     :hook (org-mode . visual-line-mode)
     :bind
     ("H-o t" . org-babel-tangle-file)
-    (:prefix-map my-org-narrowing-prefix-map
-                 :prefix "s-n"
-                 :prefix-docstring
-                 "Prefix map for narrowing commands in Org-mode."
-                 ("s" . org-narrow-to-subtree)
-                 ("b" . org-narrow-to-block)
-                 ("w" . widen)))
+    (:map org-mode-map
+          (:prefix-map my-org-narrowing-prefix-map
+                       :prefix "s-v"
+                       :prefix-docstring
+                       "Prefix map for narrowing commands in Org-mode."
+                       ("s" . org-narrow-to-subtree)
+                       ("b" . org-narrow-to-block)
+                       ("w" . widen))))
 #+end_src
 
 **** org-modern
