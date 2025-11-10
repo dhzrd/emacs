@@ -28,7 +28,8 @@
   :config
   (no-littering-theme-backups)
   (setq custom-file
-        (expand-file-name "custom.el" user-emacs-directory)))
+        (expand-file-name "custom.el" user-emacs-directory))
+  (load custom-file 'noerror))
 
 (use-package exec-path-from-shell
   :ensure t
@@ -42,77 +43,192 @@
   (add-to-list 'package-archives ; the default list contains ELPA and non-GNU ELPA
                '("melpa" . "https://melpa.org/packages/") t))
 
-(setopt backup-by-copying t
-        comment-multi-line t
-        confirm-kill-emacs 'yes-or-no-p
-        create-lockfiles nil
-        delete-old-versions t
-        fill-column 80
-        help-window-select t
-        recentf-max-saved-items 500
-        ring-bell-function 'ignore
-        savehist-mode t
-        sentence-end-double-space nil
-        tab-always-indent 'complete
-        uniquify-buffer-name-style 'forward
-        use-dialog-box nil
-        use-file-dialog nil
-        use-short-answers t
-        vc-follow-symlinks t
-        version-control t)
+(setopt  comment-multi-line t
+	 
+	 
+	 
+	 
+	 help-window-select t
+	 
+	 
+	 savehist-mode t
+	 
+	 tab-always-indent 'complete
+	 uniquify-buffer-name-style 'forward
+	 
+	 
+	 
+	 vc-follow-symlinks t
+	 )
+
+(use-package savehist
+  :hook (after-init . savehist-mode)
+  :init (setq enable-recursive-minibuffers t ; Allow commands in minibuffers
+              history-length 1000
+              savehist-additional-variables '(mark-ring
+                                              global-mark-ring
+                                              search-ring
+                                              regexp-search-ring
+                                              extended-command-history)
+              savehist-autosave-interval 300))
+
+(use-package emacs
+  :ensure nil
+  :custom
+  (create-lockfiles nil)
+  (fill-column 80)
+  (ring-bell-function 'ignore)
+  (use-dialog-box nil)
+  (use-file-dialog nil)
+  (use-short-answers t))
+
+(use-package use-package
+  :ensure nil
+  :custom (use-package-enable-imenu-support t))
+
+
 
 ;;;; GUI
 
+;; Declare font variables
+(defcustom my-default-font "Input Mono Narrow"
+  "The default font to use."
+  :type 'string
+  :group 'faces)
+
+(defcustom my-default-font-height 140
+  "The default font height (1/10 of a point)."
+  :type 'integer
+  :group 'faces)
+
+(defcustom my-variable-font "Baskerville"
+  "The variable font to use."
+  :type 'string
+  :group 'faces)
+
+(defcustom my-variable-font-height 140
+  "The variable font height (1/10 of a point)."
+  :type 'integer
+  :group 'faces)
+
+(defcustom my-ui-font "Input Mono Compressed"
+  "Font to use for UI elements."
+  :type 'string
+  :group 'faces)
+
+(defcustom my-ui-font-height 120
+  "The UI font height (1/10 of a point)."
+  :type 'integer
+  :group 'faces)
+
+(defcustom my-ui-italic-font "InputMonoCompressed-Italic"
+  "Italic font to use for UI elements."
+  :type 'string
+  :group 'faces)
+
+(defcustom my-ui-italic-font-height 120
+  "The UI italic font height (1/10 of a point)."
+  :type 'integer
+  :group 'faces)
+
+;; Define ui face with fallback
+(defface ui
+  `((t :family ,(if (find-font (font-spec :name my-ui-font))
+                    my-ui-font
+                  "Monospace")))
+  "Custom UI face for interface elements."
+  :group 'basic-faces)
+
 (use-package faces
   :ensure nil
+  :demand t
   :config
-  (when (member "Input Mono Narrow" (font-family-list))
-    (set-face-attribute 'default nil :font "Input Mono Narrow" :height 140)
-    (set-face-attribute 'fixed-pitch nil :family "Input Sans Narrow"))
-  ;; (when (member "JetBrains Mono" (font-family-list))
-  ;;   (set-face-attribute 'default nil :font "JetBrains Mono" :height 130)
-  ;;   (set-face-attribute 'fixed-pitch nil :font "JetBrains Mono"))
-    )
+  (when (find-font (font-spec :name my-default-font))
+    (set-face-attribute 'default nil
+                        :font my-default-font
+                        :height my-default-font-height))
+  (when (find-font (font-spec :name my-variable-font))
+    (set-face-attribute 'variable-pitch nil
+                        :font my-variable-font
+                        :height my-variable-font-height)))
+
+(use-package emacs
+  :ensure nil
+  :custom
+  (mode-line-mule-info nil)
+  (mode-line-remote nil)
+  (mode-line-modified nil)
+  (mode-line-position nil)
+  :config
+  ;; Set mode-line to inherit from ui face
+  (dolist (face '(mode-line mode-line-inactive))
+    (set-face-attribute face nil :inherit 'ui))
+
+  ;; Define buffer name faces with italic font or slant fallback
+  (let ((use-italic-font (find-font (font-spec :name my-ui-italic-font))))
+    (dolist (spec '((my-mode-line-buffer-name-modified "red")
+                    (my-mode-line-buffer-name-read-only "blue")
+                    (my-mode-line-buffer-name-read-only-modified "purple")))
+      (eval `(defface ,(car spec)
+               '((t :foreground ,(cadr spec)
+                    :weight bold
+                    ,@(if use-italic-font
+                          `(:family ,my-ui-italic-font)
+                        '(:slant italic))
+                    :inherit ui))
+               ,(format "Face for %s buffer name." (symbol-name (car spec)))
+               :group 'mode-line))))
+
+  ;; Customize buffer name display
+  (setq-default mode-line-buffer-identification
+                '(:eval (let ((name (propertize "%b" 'help-echo (buffer-file-name))))
+                          (cond ((and buffer-read-only (buffer-modified-p))
+                                 (propertize name 'face 'my-mode-line-buffer-name-read-only-modified))
+                                (buffer-read-only
+                                 (propertize name 'face 'my-mode-line-buffer-name-read-only))
+                                ((buffer-modified-p)
+                                 (propertize name 'face 'my-mode-line-buffer-name-modified))
+                                (t name)))))
+
+  ;; Customize mode-line format
+  (setq-default mode-line-format
+                '("%e"
+                  mode-line-front-space
+                  " "
+                  mode-line-buffer-identification
+                  "  "
+                  ;; VC info (Git branch)
+                  (:eval (when vc-mode
+                           (concat " " (substring-no-properties vc-mode))))
+		  "  "
+		 
+                  ;; Right-aligned section
+                  mode-line-format-right-align
+		  ;; mode-line-percent-position
+		  "  "
+                  mode-line-modes
+                  " "
+                  mode-line-end-spaces)))
+
+(use-package tab-bar
+  :custom
+  (tab-bar-select-tab-modifiers '(hyper))
+  (tab-bar-close-button-show nil)
+  :custom-face
+  (tab-bar ((t (:inherit ui)))))
 
 (use-package minions
-  :custom
-  (minions-mode-line-delimiters nil)
-  :config
-  (minions-mode 1))
-
-(use-package mood-line
-  :after minions
-  :preface
-  (defun my/mood-line-segment-major-mode ()
-    "Return the name of the major mode of the current buffer."
-    (concat (format-mode-line minions-mode-line-modes 'mood-line-major-mode) ""))
-  :custom
-  (mood-line-glyph-alist mood-line-glyphs-unicode)
-  (mood-line-format
-   (mood-line-defformat
-    :left
-    (((mood-line-segment-buffer-status) . " ")
-     ((mood-line-segment-buffer-name)   . " : ")
-     (my/mood-line-segment-major-mode)
-     (mood-line-segment-vc)         . "  ")
-    :right
-    (((mood-line-segment-scroll)             . " ")
-     ((mood-line-segment-cursor-position)    . "  ")
-     ((when (mood-line-segment-checker) "|") . "  ")
-     ((mood-line-segment-checker)            . "  ")))
-   :config
-   (mood-line-mode)))
+:custom
+(minions-mode-line-delimiters t)
+:config
+(minions-mode 1))
 
 (use-package mixed-pitch
-  :disabled
-  :hook
-  ;; If you want it in all text modes:
-  (text-mode . mixed-pitch-mode))
+:disabled
+:hook
+;; If you want it in all text modes:
+(text-mode . mixed-pitch-mode))
 
-;; (use-package tab-bar
-;;   :custom ((tab-bar-auto-width nil)
-;;            (tab-bar-select-tab-modifiers '(super))
-;;            (tab-bar-close-button-show nil)))
 
 
 ;; (setopt tab-bar-show nil) ; on customize-set-variable see https://emacs.stackexchange.com/a/106
@@ -126,6 +242,11 @@
   :bind
   (:map global-map
 
+	;; unbind these keys globally
+	("C-z" . nil)
+	("s-x" . nil)
+
+	;; bind these unprefixed commands globally
 	("s-a" . beginning-of-buffer)
 	("s-e" . end-of-buffer)
 
@@ -133,22 +254,10 @@
         :prefix-map my-ctrl-z-prefix-map
         :prefix "C-z"
 	
-	;; Super-f prefix map: frame cmds
-	:prefix-map my-super-f-prefix-map
-	:prefix "s-f"
-	:prefix-docstring
-        "Prefix map for frame commands."
-	("s-f" . make-frame-command)
 
-	;; Super-v prefix map: narrowing cmds
-	:prefix-map my-global-narrow-prefix-map
-        :prefix "s-v"
-        :prefix-docstring
-        "Prefix map for narrowing commands."
-        ("n" . narrow-to-region)
-        ("d" . narrow-to-defun)
-        ("p" . narrow-to-page)
-        ("w" . widen)
+	;; Super-c prefix map
+	:prefix-map my-super-x-prefix-map
+        :prefix "s-c"
 
 	;; Super-x prefix map
 	:prefix-map my-super-x-prefix-map
@@ -156,7 +265,18 @@
 
 	;; Super-z prefix map
 	:prefix-map my-super-z-prefix-map
-        :prefix "s-z"))
+        :prefix "s-z"
+
+	;; H-x
+	:prefix-map my-hyper-x-prefix-map
+        :prefix "H-x"
+        ("f" . write-region))
+  :init
+  (put 'narrow-to-page 'disabled nil)
+  (put 'upcase-region 'disabled nil)
+  (put 'narrow-to-region 'disabled nil)
+  (put 'downcase-region 'disabled nil)
+  )
 
 (use-package free-keys
   :ensure t
@@ -171,20 +291,103 @@
           mac-right-option-modifier 'nil
           mac-right-control-modifier 'hyper))
 
-;;; Editing and navigating
+(use-package transient
+  :ensure t
+  :config
+  (transient-bind-q-to-quit)
 
-(bind-keys :prefix-map my-hyper-x-prefix-map
-           :prefix "H-x"
-           ("f" . write-region))
+  (defun my-transient-consult-theme ()
+    "Select color theme and return to toggles transient menu."
+    (interactive)
+    (call-interactively #'consult-theme)
+    (buffer-toggles-menu))
+
+  (defun my-disable-theme-dwim ()
+    "Disable all themes without prompting and clean up lingering customizations."
+    (interactive)
+    ;; Disable all enabled themes
+    (mapc #'disable-theme custom-enabled-themes)
+    ;; Clean up lingering customizations by toggling modes
+    (when (bound-and-true-p outli-mode)
+      (outli-mode -1)
+      (outli-mode 1))
+    (message "Disabled all themes and refreshed modes"))
+  
+  (transient-define-prefix buffer-toggles-menu ()
+    "Menu to toggle in-buffer preferences on/off."
+    :transient-suffix t
+    ["Buffer toggles"
+     [""
+      ("c" "set color theme" my-transient-consult-theme)
+      ("d" "disable color theme" my-disable-theme-dwim)
+      ]
+     [""
+      ("f" "focus" focus-mode)
+      ("o" "olivetti" olivetti-mode)
+      ("t" "typo" typo-mode)
+      ("v" "variable fonts" variable-pitch-mode)]
+     [""
+      ("x" "Apply and exit menu" transient-quit-one)]])
+
+  (transient-define-prefix lettercase-commands-menu ()
+    "Menu for narrowing and folding commands."
+    ["Capitalization"
+     ("g" "region" capitalize-region)
+     ("m" "word or active region" capitalize-dwim)
+     ("t" "word" capitalize-word)]	; orig. M-c
+    ["Uppercase"
+     ("C" "character" upcase-char)
+     ("I" "capitalize words" upcase-initials-region )
+     ("R" "region" upcase-region)	; orig. C-x C-u
+     ("U" "word or active region" upcase-dwim)
+     ("W" "word" upcase-word) 		; orig. M-u
+     ]
+    ["Lowercase"
+     ("d" "word or active region" downcase-dwim)
+     ("r" "region" downcase-region)	; orig. C-x C-l
+     ("w" "word" downcase-word)]	; orig. M-l
+    ;; dired-specific commands (not working)
+    ["Uppercase" :if-mode dired
+     ("F" "this filename" diredp-upcase-this-file)
+     ("S" "selected filenames" diredp-upcase)
+     ("A" "selected filenames, recursively" diredp-upcase-recursive)
+     ]
+    ["Lowercase" :if-mode dired
+     ("f" "this filename" diredp-downcase-this-file)
+     ("s" "selected filenames" diredp-downcase)
+     ("a" "selected filenames, recursively" diredp-downcase-recursive)])
+
+  (transient-define-prefix narrowing-commands-menu ()
+    "Menu for buffer narrowing commands."
+    ["Narrow"
+     ("n" "to region" narrow-to-region)
+     ("d" "to defun" narrow-to-defun)
+     ("p" "to page" narrow-to-page)]
+    ["Org" :if-mode org-mode
+     ("b" "narrow to block" org-narrow-to-block)
+     ("s" "narrow to subtree" org-narrow-to-subtree)]
+    [""
+     ("w" "widen" widen)])
+
+  :bind
+  ("H-l" . lettercase-commands-menu)
+  ("H-m" . buffer-toggles-menu)
+  ("H-n" . narrowing-commands-menu))
+
+;;; Editing and navigating
 
 (use-package ace-link
   :ensure t
   :config
   (ace-link-setup-default))
 
+(use-package aggressive-indent
+  :ensure t
+  :hook ((after-init . global-aggressive-indent-mode)))
+
 (use-package avy
   :ensure t
-  :preface
+  :config
 
   ;; Define new actions to be called from avy-dispatch-alist.
 
@@ -242,6 +445,13 @@
     (activate-mark)
     (goto-char pt))
 
+  (defun my-occur-avy-goto-line-and-jump ()
+    "Use avy to jump to a line in occur buffer, then go to occurrence and quit."
+    (interactive)
+    (let ((avy-all-windows nil))
+      (avy-goto-line))
+    (my-occur-goto-occurrence-and-quit))
+
   :custom
   ;; When only one candidate is found, DON'T jump to it automatically.
   (avy-single-candidate-jump nil)
@@ -263,8 +473,11 @@
                         (?Y . avy-action-yank-line)
                         (?i . avy-action-ispell)
                         (?z . avy-action-zap-to-char)))
-  :bind
-  ("s-j" . avy-goto-char-timer))	; †exchange-point-and-mark
+  :bind (("s-f" . avy-goto-char-timer) ; †exchange-point-and-mark
+	 :map isearch-mode-map
+	 ("s-f" . avy-isearch)
+	 :map occur-mode-map
+	 ("s-l" . my-occur-avy-goto-line-and-jump)))
 
 (use-package avy-zap
   :after avy
@@ -296,6 +509,26 @@
   :ensure t
   :bind ("s-q" . goto-last-change))
 
+(use-package imenu
+  :ensure nil
+  :bind (("s-i" . imenu)))
+
+(use-package isearch
+  :ensure nil
+  :config
+  (defun my-isearch-occur-and-switch ()
+    "Run `isearch-occur', then exit isearch and switch to the occur buffer."
+    (interactive)
+    (let ((regexp (if isearch-regexp
+                      isearch-string
+                    (regexp-quote isearch-string))))
+      (isearch-occur regexp))
+    (isearch-exit)
+    (pop-to-buffer "*Occur*"))
+  
+  :bind (:map isearch-mode-map
+	      ("C-o" . my-isearch-occur-and-switch)))
+
 (use-package move-text
   :ensure t
   :bind (("s-p" . move-text-up)
@@ -315,10 +548,49 @@
 	      ("C-c C-p" . (lambda () (interactive) (outline-back-to-heading))))
   :hook ((prog-mode text-mode) . outli-mode))
 
+(use-package paragraphs
+  :ensure nil
+  :custom
+  (sentence-end-double-space nil)
+  :bind (("s-a" . backward-paragraph)
+	 ("s-e" . forward-paragraph)
+
+	 ))
+
+(use-package pulsar
+  :ensure t
+  :defines pulsar-pulse-functions
+  :config
+  (add-to-list 'pulsar-pulse-functions 'my-other-window-dwim)
+  (add-to-list 'pulsar-pulse-functions 'flymake-goto-prev-error)
+  (add-to-list 'pulsar-pulse-functions 'goto-char)
+  (add-to-list 'pulsar-pulse-functions 'xref-find-definitions)
+  (add-to-list 'pulsar-pulse-functions 'xref-find-definitions-other-window)
+  :hook
+  (after-init . pulsar-global-mode))
+
+(use-package replace
+  :ensure nil
+  :config
+  (defun my-occur-goto-occurrence-and-quit ()
+    "Go to the occurrence and quit the occur buffer window."
+    (interactive)
+    (let ((occur-window (selected-window)))
+      (occur-mode-goto-occurrence)
+      (quit-window nil occur-window)))
+  :bind (("s-r" . query-replace) 	; orig M-%
+	 :map occur-mode-map
+	 ("C-j" . my-occur-goto-occurrence-and-quit)))
+
+(use-package simple
+  :ensure nil
+  :bind (("s-[" . beginning-of-buffer)
+	 ("s-]" . end-of-buffer)))
+
 (use-package ultra-scroll
   ;; :ensure t
   :init
-  (setq scroll-conservatively 101 ; important!
+  (setq scroll-conservatively 101	; important!
         scroll-margin 0)
   :config
   (ultra-scroll-mode 1))
@@ -336,8 +608,13 @@
 ;;;; Completion
 
 (use-package vertico
-  :hook ((after-init . vertico-mode)
-         (vertico-mode . vertico-multiform-mode)))
+  ;; :custom
+  ;; (vertico-multiform-categories
+  ;;  '(embark-keybinding grid))
+  :init
+  (vertico-mode)
+  :config
+  (vertico-multiform-mode))
 
 (use-package consult
   :ensure t
@@ -371,8 +648,9 @@
    ("M-g M-g" . consult-goto-line)	 ;; †goto-line
    ("M-g o" . consult-outline)
    ("M-g m" . consult-mark)
+   ("s-g" . consult-mark)
    ("M-g k" . consult-global-mark)
-   ("M-g i" . consult-imenu)
+   ([remap imenu] . consult-imenu)
    ("M-g I" . consult-imenu-multi)
    ;; M-s bindings in `search-map'
    ("M-s d" . consult-find)
@@ -425,6 +703,13 @@
    :preview-key '(:debounce 0.4 any))	; :preview-key "M-."
   (setq consult-narrow-key "<"))
 
+(use-package consult-project-extra
+  :ensure t
+  :custom (consult-project-function #'consult-project-extra-project-fn) ;; Optional but recommended for a more consistent UI
+  :bind
+  (("s-b" . consult-project-extra-find)
+   ("s-B" . consult-project-extra-find-other-window)))
+
 (use-package embark
   :ensure t
   :bind (("s-," . embark-act)		; †customize
@@ -436,7 +721,14 @@
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
-                 (window-parameters (mode-line-format . none)))))
+                 (window-parameters (mode-line-format . none))))
+  :custom
+  (embark-quit-after-action nil)
+  ;; (prefix-help-command #'embark-prefix-help-command)
+  (embark-indicators '(embark-minimal-indicator
+                       embark-highlight-indicator
+                       embark-isearch-highlight-indicator))
+  )
 
 (use-package embark-consult
   :ensure t
@@ -476,59 +768,115 @@
   :config
   (which-key-mode))
 
-
-;;;;; Expansion
-
-(use-package hippie-exp
-  :bind ([remap dabbrev-expand] . hippie-expand))
-
-(use-package tempel
-  :disabled
-  :ensure t
-  :preface
-  (defun tempel-setup-capf ()
-    ;; Add the Tempel Capf to `completion-at-point-functions'.
-    ;; `tempel-expand' only triggers on exact matches. Alternatively use
-    ;; `tempel-complete' if you want to see all matches, but then you
-    ;; should also configure `tempel-trigger-prefix', such that Tempel
-    ;; does not trigger too often when you don't expect it. NOTE: We add
-    ;; `tempel-expand' *before* the main programming mode Capf, such
-    ;; that it will be tried first.
-    (setq-local completion-at-point-functions
-                (cons #'tempel-expand
-                      completion-at-point-functions)))
-  (add-hook 'conf-mode-hook 'tempel-setup-capf)
-  (add-hook 'prog-mode-hook 'tempel-setup-capf)
-  (add-hook 'text-mode-hook 'tempel-setup-capf)
-  :custom
-  (tempel-trigger-prefix ",")
-  (tempel-path (locate-user-emacs-file "etc/templates/tempo.eld"))
-  :bind (("s-\\" . tempel-complete)
-         ("s-|" . tempel-insert)
-         :map tempel-map
-         ([tab] . tempel-next)
-         ([backtab] . tempel-previous)))
-
-(use-package tempel-collection
-  :disabled
-  :ensure t
-  :after tempel)
-
 (use-package yasnippet
-  :ensure t
-  :config
-  (yas-global-mode 1)
-  :bind ("H-s" . yas-insert-snippet))
+  :custom
+  (yas-snippet-dirs
+   (list (expand-file-name "snippets" user-emacs-directory) ; Default personal snippets
+         (expand-file-name "elpa/yasnippet-snippets-1.0/snippets" user-emacs-directory)))
+  :bind ("H-s" . yas-insert-snippet)
+  :init (yas-global-mode))
 
 (use-package yasnippet-snippets
-  :ensure t
-  :after yasnippet
-  :pin gnu)
+  :after yasnippet)
 
-;;; Managing frames, windows, and buffers
+;;;; Files and Dired
+
+(use-package emacs
+  :ensure nil
+
+  :config
+  (defun open-in-finder-file-dir ()
+    "Open the directory of the currently visted file in macOS Finder."
+    (interactive)
+    (let ((file-path (buffer-file-name)))
+      (if file-path
+          (let ((dir-path (file-name-directory file-path)))
+            (shell-command (concat "open " (shell-quote-argument dir-path))))
+	(message "No file is associated with this buffer"))))
+
+  :bind (:map global-map
+	      ("H-f" . open-in-finder-file-dir)))
+
+(use-package files
+  :ensure nil
+  :custom
+  (backup-by-copying t)
+  (delete-old-versions t)
+  (version-control t ))
+
+(use-package recentf
+  :ensure nil
+  :custom
+  (recentf-auto-cleanup 'never)
+  (recentf-exclude '("/auto-install/"
+                     ".recentf"
+                     "/repos/"
+                     "/elpa/"
+                     "\\.mime-example"
+                     "\\.ido.last"
+                     "COMMIT_EDITMSG"
+                     ".gz"
+                     "~$"
+                     "/ssh:"
+                     "/sudo:"
+                     "/scp:"))
+  (recentf-max-menu-items 50)
+  (recentf-max-saved-items 1000)
+  :hook
+  (after-init . recentf-mode))
+
+(use-package dired
+  :ensure nil
+
+  :config
+  (defun my-dired-shorten-header ()
+    "Replace absolute path with shortened version in Dired header."
+    (let ((inhibit-read-only t))  ; Temporarily allow modifications
+      (save-excursion
+	(goto-char (point-min))
+	(when (re-search-forward "^  \\(/.*\\):$" nil t)
+          (let* ((full-path (match-string 1))
+		 (short-path (abbreviate-file-name full-path)))
+            (replace-match (concat "  " short-path ":") t t))))))
+
+  (defun open-in-finder-current-dired ()
+    "Open the currently visited Dired directory in macOS Finder."
+    (interactive)
+    (if (eq major-mode 'dired-mode)
+	(let ((dir-path (dired-current-directory)))
+          (shell-command (concat "open " (shell-quote-argument dir-path))))
+      (message "Not in dired mode")))
+
+  :custom
+  (dired-auto-revert-buffer t)
+  (dired-dwim-target t)
+  (dired-free-space 'separate)
+  (dired-hide-details-hide-symlink-targets nil)
+
+  :bind (:map dired-mode-map
+	      ("H-f" . open-in-finder-current-dired))
+
+  :hook
+  (dired-mode . dired-hide-details-mode) ; alternatively set in dired+
+  (dired-after-readin-hook . my-dired-shorten-header))
+
+(use-package dired+
+  :ensure nil
+  :vc (:url "https://github.com/emacsmirror/dired-plus"
+	    :rev :newest))
+
+(use-package dired-x
+  :ensure nil
+  :custom
+  (dired-omit-files "^\\.?#\\|^\\.$\\|^\\.\\.$\\|^\\.")
+  :hook (dired-mode . dired-omit-mode))
+
+;;; Managing frames, tabs, windows, and buffers
 
 (use-package ace-window
   :ensure t
+  :preface
+  
   :demand
   :bind ("M-o" . ace-window)
   :custom
@@ -558,94 +906,90 @@
 ;;         ("g" . activities-revert)
 ;;         ("l" . activities-list)))
 
-(use-package bufferlo
-  :ensure t
-  :demand t
-  ;; :after (ibuffer consult)
-  :init
-  (defvar bufferlo-command-map (make-sparse-keymap)
-    "Keymap for bufferlo commands.")
-  :config
-  (defvar my:bufferlo-consult--source-local-buffers
-    (list :name "Bufferlo Local Buffers"
-          :narrow   ?l
-          :category 'buffer
-          :face     'consult-buffer
-          :history  'buffer-name-history
-          :state    #'consult--buffer-state
-          :default  t
-          :items    (lambda () (consult--buffer-query
-  				:predicate #'bufferlo-local-buffer-p
-  				:sort 'visibility
-  				:as #'buffer-name)))
-    "Local Bufferlo buffer candidate source for `consult-buffer'.")
+;; (use-package bufferlo
+;;   :ensure t
+;;   :demand t
+;;   ;; :after (ibuffer consult)
+;;   :init
+;;   (defvar bufferlo-command-map (make-sparse-keymap)
+;;     "Keymap for bufferlo commands.")
+;;   :config
+;;   (defvar my:bufferlo-consult--source-local-buffers
+;;     (list :name "Bufferlo Local Buffers"
+;;           :narrow   ?l
+;;           :category 'buffer
+;;           :face     'consult-buffer
+;;           :history  'buffer-name-history
+;;           :state    #'consult--buffer-state
+;;           :default  t
+;;           :items    (lambda () (consult--buffer-query
+;;   				:predicate #'bufferlo-local-buffer-p
+;;   				:sort 'visibility
+;;   				:as #'buffer-name)))
+;;     "Local Bufferlo buffer candidate source for `consult-buffer'.")
 
-  (defvar my:bufferlo-consult--source-other-buffers
-    (list :name "Bufferlo Other Buffers"
-          :narrow   ?b
-          :category 'buffer
-          :face     'consult-buffer
-          :history  'buffer-name-history
-          :state    #'consult--buffer-state
-          :items    (lambda () (consult--buffer-query
-  				:predicate #'bufferlo-non-local-buffer-p
-  				:sort 'visibility
-  				:as #'buffer-name)))
-    "Non-local Bufferlo buffer candidate source for `consult-buffer'.")
+;;   (defvar my:bufferlo-consult--source-other-buffers
+;;     (list :name "Bufferlo Other Buffers"
+;;           :narrow   ?b
+;;           :category 'buffer
+;;           :face     'consult-buffer
+;;           :history  'buffer-name-history
+;;           :state    #'consult--buffer-state
+;;           :items    (lambda () (consult--buffer-query
+;;   				:predicate #'bufferlo-non-local-buffer-p
+;;   				:sort 'visibility
+;;   				:as #'buffer-name)))
+;;     "Non-local Bufferlo buffer candidate source for `consult-buffer'.")
 
-  ;; add in the reverse order of display preference
-  (add-to-list 'consult-buffer-sources 'my:bufferlo-consult--source-other-buffers)
-  (add-to-list 'consult-buffer-sources 'my:bufferlo-consult--source-local-buffers)
-  (bufferlo-mode)
-  (bufferlo-anywhere-mode)
-  :custom
-  (bufferlo-bookmark-frame-load-make-frame t) ; default is nil for backward compatibility
-  (bufferlo-bookmark-frame-load-make-frame 'restore-geometry)
-  ;; (bufferlo-bookmarks-auto-save-interval 120)
-  :bind-keymap ("s-b" . bufferlo-command-map)
-  :bind (:map bufferlo-command-map
-  	      ;; buffer / ibuffer
-  	      ("b" . bufferlo-switch-to-buffer)
-  	      ("s-b" . bufferlo-ibuffer)
-  	      ("o" . bufferlo-ibuffer-orphans)
-  	      ("-" . bufferlo-remove)
-  	      ;; general bookmark (interactive)
-  	      ("m l" . bufferlo-bms-load)
-  	      ("m s" . bufferlo-bms-save)
-  	      ("m c" . bufferlo-bms-close)
-  	      ("m r" . bufferlo-bm-raise)
-  	      ;; dwim frame or tab bookmarks
-  	      ("s-s" . bufferlo-bm-save)
-  	      ("s-l" . bufferlo-bm-load)
-  	      ("s-0" . bufferlo-bm-close)
-  	      ;; tabs
-  	      ("t s" . bufferlo-bm-tab-save)               ; save
-  	      ("t u" . bufferlo-bm-tab-save-curr)          ; update
-  	      ("t l" . bufferlo-bm-tab-load)               ; load
-  	      ("t r" . bufferlo-bm-tab-load-curr)          ; reload
-  	      ("t 0" . bufferlo-bm-tab-close-curr)         ; kill
-  	      ;; frames
-  	      ("f s" . bufferlo-bm-frame-save)             ; save
-  	      ("f u" . bufferlo-bm-frame-save-curr)        ; update
-  	      ("f l" . bufferlo-bm-frame-load)             ; load
-  	      ("f r" . bufferlo-bm-frame-load-curr)        ; reload
-  	      ("f m" . bufferlo-bm-frame-load-merge)       ; merge
-  	      ("f 0" . bufferlo-bm-frame-close-curr)       ; kill
-  	      ;; sets
-  	      ("s s" . bufferlo-set-save)                  ; save
-  	      ("s u" . bufferlo-set-save-curr)             ; update
-  	      ("s +" . bufferlo-set-add)                   ; add bookmark
-  	      ("s =" . bufferlo-set-add)                   ; add bookmark
-  	      ("s -" . bufferlo-set-remove)                ; remove bookmark
-  	      ("s l" . bufferlo-set-load)                  ; load
-  	      ("s 0" . bufferlo-set-close)                 ; kill
-  	      ("s c" . bufferlo-set-clear)                 ; clear
-  	      ("s L" . bufferlo-set-list)                  ; list contents of selected active sets
-  	      ))
-
-(use-package fwb-cmds
-  :ensure t
-  :bind ("C-x C-1" . fwb-toggle-window-split)) ; †next-window-any-frame
+;;   ;; add in the reverse order of display preference
+;;   (add-to-list 'consult-buffer-sources 'my:bufferlo-consult--source-other-buffers)
+;;   (add-to-list 'consult-buffer-sources 'my:bufferlo-consult--source-local-buffers)
+;;   (bufferlo-mode)
+;;   (bufferlo-anywhere-mode)
+;;   :custom
+;;   (bufferlo-bookmark-frame-load-make-frame t) ; default is nil for backward compatibility
+;;   (bufferlo-bookmark-frame-load-make-frame 'restore-geometry)
+;;   ;; (bufferlo-bookmarks-auto-save-interval 120)
+;;   :bind-keymap ("s-b" . bufferlo-command-map)
+;;   :bind (:map bufferlo-command-map
+;;   	      ;; buffer / ibuffer
+;;   	      ("b" . bufferlo-switch-to-buffer)
+;;   	      ("s-b" . bufferlo-ibuffer)
+;;   	      ("o" . bufferlo-ibuffer-orphans)
+;;   	      ("-" . bufferlo-remove)
+;;   	      ;; general bookmark (interactive)
+;;   	      ("m l" . bufferlo-bms-load)
+;;   	      ("m s" . bufferlo-bms-save)
+;;   	      ("m c" . bufferlo-bms-close)
+;;   	      ("m r" . bufferlo-bm-raise)
+;;   	      ;; dwim frame or tab bookmarks
+;;   	      ("s-s" . bufferlo-bm-save)
+;;   	      ("s-l" . bufferlo-bm-load)
+;;   	      ("s-0" . bufferlo-bm-close)
+;;   	      ;; tabs
+;;   	      ("t s" . bufferlo-bm-tab-save)               ; save
+;;   	      ("t u" . bufferlo-bm-tab-save-curr)          ; update
+;;   	      ("t l" . bufferlo-bm-tab-load)               ; load
+;;   	      ("t r" . bufferlo-bm-tab-load-curr)          ; reload
+;;   	      ("t 0" . bufferlo-bm-tab-close-curr)         ; kill
+;;   	      ;; frames
+;;   	      ("f s" . bufferlo-bm-frame-save)             ; save
+;;   	      ("f u" . bufferlo-bm-frame-save-curr)        ; update
+;;   	      ("f l" . bufferlo-bm-frame-load)             ; load
+;;   	      ("f r" . bufferlo-bm-frame-load-curr)        ; reload
+;;   	      ("f m" . bufferlo-bm-frame-load-merge)       ; merge
+;;   	      ("f 0" . bufferlo-bm-frame-close-curr)       ; kill
+;;   	      ;; sets
+;;   	      ("s s" . bufferlo-set-save)                  ; save
+;;   	      ("s u" . bufferlo-set-save-curr)             ; update
+;;   	      ("s +" . bufferlo-set-add)                   ; add bookmark
+;;   	      ("s =" . bufferlo-set-add)                   ; add bookmark
+;;   	      ("s -" . bufferlo-set-remove)                ; remove bookmark
+;;   	      ("s l" . bufferlo-set-load)                  ; load
+;;   	      ("s 0" . bufferlo-set-close)                 ; kill
+;;   	      ("s c" . bufferlo-set-clear)                 ; clear
+;;   	      ("s L" . bufferlo-set-list)                  ; list contents of selected active sets
+;;   	      ))
 
 (use-package ibuffer
   :ensure nil
@@ -654,12 +998,22 @@
 ;; (use-package ibuffer-vc
 ;;   :after ibuffer)
 
+;; (use-package otpp
+;;   :ensure t
+;;   :after project
+;;   :init
+;;   ;; Enable `otpp-mode` globally
+;;   (otpp-mode 1)
+;;   ;; If you want to advice the commands in `otpp-override-commands`
+;;   ;; to be run in the current's tab (so, current project's) root directory
+;;   ;; (otpp-override-mode 1)
+;;   )
+
 (use-package popper
   :ensure t
-  :bind (("H-`"   . popper-toggle)
-         ("H-<tab>"   . popper-cycle)
-         (:map popper-mode-map
-               ("H-1" . popper-toggle-type)))
+  :bind (("C-`"   . popper-toggle)
+         ("M-`"   . popper-cycle)
+         ("C-M-`" . popper-toggle-type))
   :custom
   (popper-echo-mode t)
   ;; specify buffer types for popper to control
@@ -673,12 +1027,97 @@
   :hook
   (after-init . popper-mode))
 
+(use-package project
+  :ensure nil
+  :custom
+  (project-vc-extra-root-markers '(".dir-locals.el" "package.json" ".project" ".project.el"))
+  :bind (("s-x b" . project-switch-project)))
+
+;; (use-package tabspaces
+;;   :ensure t
+;;   :config
+;;   (transient-define-prefix tabspaces-menu ()
+;;     "Transient menu for tabspaces-mode"
+;;     ["Tabspaces"
+;;      ["Workspaces"
+;;       ("K" "Kill workspace but not buffers" tabspaces-close-workspace)
+;;       ("k" "Kill workspace and local buffers" tabspaces-kill-buffers-close-workspace)
+;;       ("o" "Open/create" tabspaces-open-or-create-project-and-workspace)
+;;       ("s" "Switch/create" tabspaces-switch-or-create-workspace)]
+;;      ["Manage"
+;;       ("w" "Show workspaces" tabspaces-show-workspaces)]
+;;      ["Buffers"
+;;       ("b" "Switch to local buffer" tabspaces-switch-to-buffer)
+;;       ("c" "Clear other buffers" tabspaces-clear-buffers)
+;;       ("r" "Remove current buffer from workspace" tabspaces-remove-current-buffer)
+;;       ("R" "Remove selected buffer from workspace" tabspaces-remove-selected-buffer)
+;;       ("t" "Switch to buffer in workspace" tabspaces-switch-buffer-and-tab)]
+;;      ]
+;;     )
+;;   :bind ("H-<tab>" . tabspaces-menu)
+;;   :hook (after-init . tabspaces-mode)
+;;   :commands (tabspaces-switch-or-create-workspace
+;;              tabspaces-open-or-create-project-and-workspace)
+;;   :custom
+;;   (tabspaces-use-filtered-buffers-as-default t)
+;;   (tabspaces-default-tab "Default")
+;;   (tabspaces-remove-to-default t)
+;;   (tabspaces-include-buffers '("*scratch*"))
+;;   (tabspaces-initialize-project-with-todo t)
+;;   (tabspaces-todo-file-name "project-todo.org")
+;;   ;; sessions
+;;   (tabspaces-session t)
+;;   ;;(tabspaces-session-auto-restore t)
+;;   (tab-bar-new-tab-choice "*scratch*"))
+
+(use-package transpose-frame
+  :ensure t
+  :bind (("s-(" . rotate-frame-anticlockwise)
+	 ("s-)" . rotate-frame-clockwise)
+	 ("s-*" . transpose-frame)))
+
 (use-package windmove
   :config
   (windmove-default-keybindings 'hyper)
   ;; (windmove-delete-default-keybindings)
   ;; (windmove-display-default-keybindings)
   (windmove-swap-states-default-keybindings '(hyper shift)))
+
+(use-package window
+  :ensure nil
+  :config
+
+  (defun my-delete-other-windows-dwim ()
+    "Delete the windows in the same column with WINDOW, but not WINDOW itself.
+
+If there are only two windows in the current frame, call `delete-other-windows'
+to maximize the current window."
+    (interactive)
+    (if (= (length (window-list)) 2)
+	(delete-other-windows)
+      (delete-other-windows-vertically)))
+
+  (defun my-other-window-dwim (arg &optional all-frames)
+    "Switch to other window. If there is only one window in the current frame,
+split it horizontally and move point to the newly created window. If called with
+a prefix argument, split the window vertically before moving point to newly
+created window."
+    (interactive "P")
+    (if (one-window-p)
+	(progn
+	  (if arg
+	      (split-window-vertically)
+            (split-window-horizontally))
+          (other-window 1))
+      (other-window (prefix-numeric-value arg) all-frames)))
+
+  :bind
+  ("C-x 1" . my-delete-other-windows-dwim)
+  ("C-x C-1" . delete-other-windows)
+  ("M-o" . my-other-window-dwim)
+  ("s-v" . scroll-up-line)
+  ("s-M-v" . scroll-down-line)
+  )
 
 (use-package winner
   :hook (after-init . winner-mode)
@@ -699,6 +1138,26 @@
                            "*Activities (error)")))
 
 ;;; Working with code
+
+(use-package eglot
+  :ensure nil
+  :defer t
+  ;; :hook (
+  ;; 	 (css-basemode)
+  ;; 	 (js-mode)
+  ;; 	 (json-mode)
+  ;; 	 (lua-mode)
+  ;; 	 (typescript-ts-base-mode)
+  ;; 	 . eglot-ensure)
+  )
+
+;; wrapper around https://github.com/blahgeek/emacs-lsp-booster?tab=readme-ov-file#obtain-or-build-emacs-lsp-booster
+(use-package eglot-booster
+  :disabled				; need to install Rust toolchain and then emacs-lsp-booster first
+  :vc (:url "https://github.com/jdtsmith/eglot-booster"
+	    :rev :newest)
+  :after eglot
+  :config (eglot-booster-mode))
 
 (use-package elec-pair
   :ensure nil
@@ -723,83 +1182,83 @@
   :ensure t
   :mode "\\.lua$")
 
-(use-package lsp-mode
-  :diminish "LSP"
-  :ensure t
-  :hook ((lsp-mode . lsp-diagnostics-mode)
-         (lsp-mode . lsp-enable-which-key-integration)
-         ((tsx-ts-mode
-           typescript-ts-mode
-           js-ts-mode) . lsp-deferred))
-  :custom
-  (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
-  (lsp-completion-provider :none)       ; Using Corfu as the provider
-  (lsp-diagnostics-provider :flycheck)
-  (lsp-session-file (locate-user-emacs-file ".lsp-session"))
-  (lsp-log-io nil) ; IMPORTANT! Use only for debugging! Drastically affects performance
-  (lsp-keep-workspace-alive nil) ; Close LSP server if all project buffers are closed
-  (lsp-idle-delay 0.5)	 ; Debounce timer for `after-change-function'
-  ;; core
-  (lsp-enable-xref t)	 ; Use xref to find references
-  (lsp-auto-configure t) ; Used to decide between current active servers
-  (lsp-eldoc-enable-hover t) ; Display signature information in the echo area
-  (lsp-enable-dap-auto-configure t)     ; Debug support
-  (lsp-enable-file-watchers nil)
-  (lsp-enable-folding nil)	 ; I disable folding since I use origami
-  (lsp-enable-imenu t)
-  (lsp-enable-indentation nil)	    ; I use prettier
-  (lsp-enable-links nil)	    ; No need since we have `browse-url'
-  (lsp-enable-on-type-formatting nil)   ; Prettier handles this
-  (lsp-enable-suggest-server-download t) ; Useful prompt to download LSP providers
-  (lsp-enable-symbol-highlighting t) ; Shows usages of symbol at point in the current buffer
-  (lsp-enable-text-document-color nil)	; This is Treesitter's job
+;; (use-package lsp-mode
+;;   :diminish "LSP"
+;;   :ensure t
+;;   :hook ((lsp-mode . lsp-diagnostics-mode)
+;;          (lsp-mode . lsp-enable-which-key-integration)
+;;          ((tsx-ts-mode
+;;            typescript-ts-mode
+;;            js-ts-mode) . lsp-deferred))
+;;   :custom
+;;   (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
+;;   (lsp-completion-provider :none)       ; Using Corfu as the provider
+;;   (lsp-diagnostics-provider :flycheck)
+;;   (lsp-session-file (locate-user-emacs-file ".lsp-session"))
+;;   (lsp-log-io nil) ; IMPORTANT! Use only for debugging! Drastically affects performance
+;;   (lsp-keep-workspace-alive nil) ; Close LSP server if all project buffers are closed
+;;   (lsp-idle-delay 0.5)	 ; Debounce timer for `after-change-function'
+;;   ;; core
+;;   (lsp-enable-xref t)	 ; Use xref to find references
+;;   (lsp-auto-configure t) ; Used to decide between current active servers
+;;   (lsp-eldoc-enable-hover t) ; Display signature information in the echo area
+;;   (lsp-enable-dap-auto-configure t)     ; Debug support
+;;   (lsp-enable-file-watchers nil)
+;;   (lsp-enable-folding nil)	 ; I disable folding since I use origami
+;;   (lsp-enable-imenu t)
+;;   (lsp-enable-indentation nil)	    ; I use prettier
+;;   (lsp-enable-links nil)	    ; No need since we have `browse-url'
+;;   (lsp-enable-on-type-formatting nil)   ; Prettier handles this
+;;   (lsp-enable-suggest-server-download t) ; Useful prompt to download LSP providers
+;;   (lsp-enable-symbol-highlighting t) ; Shows usages of symbol at point in the current buffer
+;;   (lsp-enable-text-document-color nil)	; This is Treesitter's job
 
-  (lsp-ui-sideline-show-hover nil)  ; Sideline used only for diagnostics
-  (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
-  ;; completion
-  (lsp-completion-enable t)
-  (lsp-completion-enable-additional-text-edit t) ; Ex: auto-insert an import for a completion candidate
-  (lsp-enable-snippet t)      ; Important to provide full JSX completion
-  (lsp-completion-show-kind t)	       ; Optional
-  ;; headerline
-  (lsp-headerline-breadcrumb-enable t) ; Optional, I like the breadcrumbs
-  (lsp-headerline-breadcrumb-enable-diagnostics nil) ; Don't make them red, too noisy
-  (lsp-headerline-breadcrumb-enable-symbol-numbers nil)
-  (lsp-headerline-breadcrumb-icons-enable nil)
-  ;; modeline
-  (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
-  (lsp-modeline-diagnostics-enable nil)	; Already supported through `flycheck'
-  (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
-  (lsp-signature-doc-lines 1) ; Don't raise the echo area. It's distracting
-  (lsp-ui-doc-use-childframe t)		; Show docs for symbol at point
-  (lsp-eldoc-render-all nil) ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
-  ;; lens
-  (lsp-lens-enable nil)                 ; Optional, I don't need it
-  ;; semantic
-  (lsp-semantic-tokens-enable nil) ; Related to highlighting, and we defer to treesitter
+;;   (lsp-ui-sideline-show-hover nil)  ; Sideline used only for diagnostics
+;;   (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
+;;   ;; completion
+;;   (lsp-completion-enable t)
+;;   (lsp-completion-enable-additional-text-edit t) ; Ex: auto-insert an import for a completion candidate
+;;   (lsp-enable-snippet t)      ; Important to provide full JSX completion
+;;   (lsp-completion-show-kind t)	       ; Optional
+;;   ;; headerline
+;;   (lsp-headerline-breadcrumb-enable t) ; Optional, I like the breadcrumbs
+;;   (lsp-headerline-breadcrumb-enable-diagnostics nil) ; Don't make them red, too noisy
+;;   (lsp-headerline-breadcrumb-enable-symbol-numbers nil)
+;;   (lsp-headerline-breadcrumb-icons-enable nil)
+;;   ;; modeline
+;;   (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
+;;   (lsp-modeline-diagnostics-enable nil)	; Already supported through `flycheck'
+;;   (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
+;;   (lsp-signature-doc-lines 1) ; Don't raise the echo area. It's distracting
+;;   (lsp-ui-doc-use-childframe t)		; Show docs for symbol at point
+;;   (lsp-eldoc-render-all nil) ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
+;;   ;; lens
+;;   (lsp-lens-enable nil)                 ; Optional, I don't need it
+;;   ;; semantic
+;;   (lsp-semantic-tokens-enable nil) ; Related to highlighting, and we defer to treesitter
 
-  :init
-  (setq lsp-use-plists t))
+;;   :init
+;;   (setq lsp-use-plists t))
 
-(use-package lsp-completion
-  :no-require
-  :hook ((lsp-mode . lsp-completion-mode)))
+;; (use-package lsp-completion
+;;   :no-require
+;;   :hook ((lsp-mode . lsp-completion-mode)))
 
-(use-package lsp-eslint
-  :demand t
-  :after lsp-mode)
+;; (use-package lsp-eslint
+;;   :demand t
+;;   :after lsp-mode)
 
-(use-package lsp-ui
-  :ensure t
-  :commands
-  (lsp-ui-doc-show
-   lsp-ui-doc-glance)
-  :bind (:map lsp-mode-map
-              ("C-c C-d" . 'lsp-ui-doc-glance))
-  :config (setq lsp-ui-doc-enable t
-                lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
-                lsp-ui-doc-include-signature t       ; Show signature
-                lsp-ui-doc-position 'at-point))
+;; (use-package lsp-ui
+;;   :ensure t
+;;   :commands
+;;   (lsp-ui-doc-show
+;;    lsp-ui-doc-glance)
+;;   :bind (:map lsp-mode-map
+;;               ("C-c C-d" . 'lsp-ui-doc-glance))
+;;   :config (setq lsp-ui-doc-enable t
+;;                 lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
+;;                 lsp-ui-doc-include-signature t       ; Show signature
+;;                 lsp-ui-doc-position 'at-point))
 
 (use-package magit
   :ensure t
@@ -931,14 +1390,6 @@ invoked from a Python process, it will switch back to the `python-mode' buffer."
   :config
   (my/setup-install-grammars))
 
-
-
-
-
-
-
-
-
 ;;;; Webdev
 
 (use-package astro-ts-mode
@@ -981,6 +1432,7 @@ invoked from a Python process, it will switch back to the `python-mode' buffer."
 (use-package org
   :custom
   (org-startup-indented t)
+  (org-cycle-separator-lines 0)
   (org-ellipsis " …")
   ;; Remove underline from org-ellipsis just defined.
   (set-face-underline 'org-ellipsis nil)
@@ -989,17 +1441,46 @@ invoked from a Python process, it will switch back to the `python-mode' buffer."
   (org-insert-heading-respect-content t)
   (org-hide-emphasis-markers t)
   (org-pretty-entities t)
+  (org-agenda-files (list org-directory))
+  (org-directory "~/Dropbox/org")
+  (org-default-notes-file (concat org-directory "/capture.org"))
+
+  (org-capture-templates
+   ;; See (info "(org) Template expansion")
+   '(("a" "Appointment" entry (file "agenda.org")
+      "* Appointment with Dr. %^{Who?} %^{When?}t :appointment:")
+     ("c" "Chore" entry (file "chores.org")
+      "* TODO %?")
+     ("e" "Errand" entry (file "errands.org")
+      "* TODO %?")
+     ("m" "Meeting" entry (file "agenda.org")
+      "* TODO Meeting with %^{Who?} %^{When?}t %? :meeting:")
+     ("t" "Task" entry (file "capture.org")
+      "* TODO %?")
+     ("w" "Consulting" entry (file "consulting.org")
+      "* TODO %?")
+     ("z" "Capture" entry (file "capture.org")
+      "* %?")))
+
+  (org-refile-targets
+   '((nil :maxlevel . 1)
+     (org-agenda-files :maxlevel . 1)))
+
+  (org-refile-use-outline-path 'file)
+
+  :config
+  (defun my-org-insert-heading-above ()
+    (interactive)
+    (move-beginning-of-line nil)
+    (org-insert-heading))
+
   :hook (org-mode . visual-line-mode)
-  :bind
-  ("H-o t" . org-babel-tangle-file)
-  (:map org-mode-map
-        (:prefix-map my-org-narrowing-prefix-map
-                     :prefix "s-v"
-                     :prefix-docstring
-                     "Prefix map for narrowing commands in Org-mode."
-                     ("s" . org-narrow-to-subtree)
-                     ("b" . org-narrow-to-block)
-                     ("w" . widen))))
+  :bind (("H-a" . org-agenda )
+	 ("H-c" . org-capture)
+	 ("H-o t" . org-babel-tangle-file)
+	 :map org-mode-map
+	 ;; ("C-\\" . my-org-insert-heading-above)
+	 ))
 
 (use-package org-modern
   :after org
@@ -1010,176 +1491,43 @@ invoked from a Python process, it will switch back to the `python-mode' buffer."
    ;; '(("►" . "▼") ("►" . "▼") ("►" . "▼") ("►" . "▼") ("►" . "▼"))
    ;; Use with Jetbrains Mono font
    '(("▹" . "▿") ("▹" . "▿") ("▹" . "▿") ("▹" . "▿") ("▹" . "▿")))
+  (org-modern-keyword t)
   :hook
   (org-mode . org-modern-mode))
 
-(use-package org-modern-indent
-  :after org-modern
-  :config ; add late to hook
-  (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
+;; (use-package org-modern-indent
+;;   :after org-modern
+;;   :config ; add late to hook
+;;   (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
 
-(use-package org-tidy
-  :disabled
-  :hook
-  (org-mode . org-tidy-mode))
 
-(use-package org-capture
-  :ensure nil
-  :custom
-  (org-capture-templates
-   ''("s" "macOS Safari clipboard capture" entry
-      (file+olp+datetree "~/notes/notes-from-safari.org")
-      "* %?    :safari:note:\n%U\n\n%i\n")))
 
-;; From Aimé Bertrand's config on Gitlab. See also blog post from 2022:
-;; https://macowners.club/posts/org-capture-from-everywhere-macos/
-
-;; bind key to: emacsclient -ne "(timu-org-make-capture-frame)"
-;; with a macos Automator.app created Service
-(defadvice org-capture-finalize
-    (after delete-capture-frame activate)
-  "Advise capture-finalize to close the frame."
-  (if (equal "capture" (frame-parameter nil 'name))
-      (delete-frame)))
-
-(defadvice org-capture-destroy
-    (after delete-capture-frame activate)
-  "Advise capture-destroy to close the frame."
-  (if (equal "capture" (frame-parameter nil 'name))
-      (delete-frame)))
-
-(defun timu-org-make-capture-frame ()
-  "Create a new frame and run `org-capture'."
-  (interactive)
-  (make-frame '((name . "capture")
-                (top . 300)
-                (left . 700)
-                (width . 80)
-                (height . 25)))
-  (select-frame-by-name "capture")
-  (delete-other-windows)
-  (noflet ((switch-to-buffer-other-window (buf) (switch-to-buffer buf)))
-          (org-capture)))
-
-;; capture and/or org-yank from macos clipboard
-;; credit: http://www.howardism.org/Technical/Emacs/capturing-content.html
-;; credit: https://gitlab.com/howardabrams/spacemacs.d/-/tree/master/layers
-(defun timu-org-cmd-with-exit-code (program &rest args)
-  "Run PROGRAM with ARGS and return the exit code and output in a list."
-  (with-temp-buffer
-    (list (apply #'call-process program nil (current-buffer) nil args)
-          (buffer-string))))
-
-(defun timu-org-convert-applescript-to-html (contents)
-  "Return the Applescript's clipboard CONTENTS in a packed array.
-Convert and return this encoding into a UTF-8 string."
-  (cl-flet ((hex-pack-bytes (tuple) (string-to-number (apply #'string tuple) 16)))
-    (let* ((data (-> contents
-                     (substring 10 -2) ; strips off the =«data RTF= and =»\= bits
-                     (string-to-list)))
-           (byte-seq (->> data
-                          (-partition 2)  ; group each two hex characters into tuple
-                          (mapcar #'hex-pack-bytes))))
-      (decode-coding-string
-       (mapconcat #'byte-to-string byte-seq "") 'utf-8))))
-
-(defun timu-org-get-os-clipboard ()
-  "Return a list where the first entry is the either :html or :text.
-The second is the clipboard contents."
-  (if (eq system-type 'darwin)
-      (timu-org-get-mac-clipboard)
-    (timu-org-get-linux-clipboard)))
-
-(defun timu-org-get-mac-clipboard ()
-  "Return the clipbaard for a macOS system.
-See `timu-org-get-os-clipboard'."
-  (cl-destructuring-bind (exit-code contents)
-      (timu-org-cmd-with-exit-code "/usr/bin/osascript" "-e" "the clipboard as \"HTML\"")
-    (if (= 0 exit-code)
-        (list :html (timu-org-convert-applescript-to-html contents))
-      (list :text (shell-command-to-string "/usr/bin/osascript -e 'the clipboard'")))))
-
-(defun timu-org-get-linux-clipboard ()
-  "Return the clipbaard for a Linux system.
-See `timu-org-get-os-clipboard'."
-  (cl-destructuring-bind (exit-code contents)
-      (timu-org-cmd-with-exit-code "xclip" "-o" "-sel" "clip" "-t" "text/html")
-    (if (= 0 exit-code)
-        (list :html contents)
-      (list :text (shell-command-to-string "xclip -o")))))
-
-(defun timu-org-clipboard ()
-  "Return the contents of the clipboard in `org-mode' format."
-  (cl-destructuring-bind (type contents) (timu-org-get-os-clipboard)
-    (with-temp-buffer
-      (insert contents)
-      (if (eq :html type)
-          (shell-command-on-region
-           (point-min)
-           (point-max) (concat (executable-find "pandoc") " -f  -t org --wrap=none") t t)
-        (shell-command-on-region
-         (point-min)
-         (point-max) (concat (executable-find "pandoc") " -f markdown -t org --wrap=none") t t))
-      (buffer-substring-no-properties (point-min) (point-max)))))
-
-(defun timu-org-yank-clipboard ()
-  "Yank the contents of the Mac clipboard in an `org-mode' compatible format."
-  (interactive)
-  (insert (timu-org-clipboard)))
-
-(defun timu-org-quick-outlook-capture ()
-  "Call `org-capture-string' on the currently selected outlook msg."
-  (org-capture-string (org-mac-link-outlook-message-get-links) "o")
-  (ignore-errors)
-  (org-capture-finalize))
-
-(defun timu-org-safari-capture ()
-  "Call `org-capture-string' on the contents of the Apple clipboard.
-Use `org-mac-link-safari-get-frontmost-url' to capture content from Safari.
-Triggered by a custom macOS Quick Action with keybinding."
-  (org-capture-string (timu-org-clipboard) "s")
-  (ignore-errors)
-  (insert (org-mac-link-safari-get-frontmost-url))
-  (org-capture-finalize))
-
-(defun timu-org-safari-url-capture ()
-  "Call `org-capture-string' on the current front most Safari window.
-Use `org-mac-link-safari-get-frontmost-url' to capture url from Safari.
-Triggered by a custom macOS Quick Action with a keyboard shortcut."
-  (org-capture-string (org-mac-link-safari-get-frontmost-url) "u")
-  (ignore-errors)
-  (org-capture-finalize)
-  (find-file timu-org-notes-file)
-  (goto-char (point-max))
-  (org-previous-visible-heading 1)
-  (timu-org-notes-header-clean)
-  (write-file timu-org-notes-file))
-
-(defun timu-org-quick-safari-blog-idea-capture ()
-  "Call `org-capture-string' on the current most front Safari window.
-Use `org-mac-link-safari-get-frontmost-url' to capture blog ideas from Safari.
-Triggered by a custom macOS Quick Action with keybinding."
-  (org-capture-string (org-mac-link-safari-get-frontmost-url) "b")
-  (ignore-errors)
-  (org-capture-finalize))
-
-(defun timu-org-qutebrowser-capture ()
-  "Call `org-capture-string' on the contents of the Apple clipboard.
-Use `org-mac-link-qutebrowser-get-frontmost-url' to capture qutebrowser content.
-Triggered by a custom macOS Quick Action with keybinding."
-  (org-capture-string (timu-org-clipboard) "q")
-  (ignore-errors)
-  (insert (org-mac-link-qutebrowser-get-frontmost-url))
-  (org-capture-finalize))
 
 ;;; Reading and writing
 
 (use-package consult-denote
-
+  :after (consult denote)
   :bind (("C-c n f" . consult-denote-find)
 	 ("C-c n g" . consult-denote-grep))
+  
   :config
+  (when (executable-find "fd")
+    (setopt consult-denote-find-command #'consult-fd))
+  (when (executable-find "rg")
+    (setopt consult-denote-grep-command #'consult-ripgrep))
   (consult-denote-mode 1))
+
+(use-package consult-notes
+  :disabled
+  :after (consult denote)
+  :ensure t
+  :commands (consult-notes
+             consult-notes-search-in-all-notes)
+  :custom
+  (consult-notes-denote-files-function #'denote-directory-files) ; Search only for text files in denote dir
+  (consult-notes-use-rg (and (executable-find "rg") t))
+  :config
+  (consult-notes-denote-mode))
 
 (use-package denote
 
@@ -1191,7 +1539,18 @@ Triggered by a custom macOS Quick Action with keybinding."
   :hook
   (dired-mode . denote-dired-mode)
   :custom
-  (denote-directory "~/notes/"))
+  (denote-directory "~/Dropbox/notes")
+  (denote-file-name-slug-functions
+   '((title . denote-sluggify-title)
+     (keyword . denote-sluggify-keyword)
+     (signature . denote-sluggify-signature))))
+
+(use-package focus-mode :commands focus-mode)
+
+(use-package goggles
+  :hook ((prog-mode text-mode) . goggles-mode)
+  :config
+  (setq-default goggles-pulse t)) ;; set to nil to disable pulsing
 
 (use-package graphviz-dot-mode
   :ensure t
@@ -1206,7 +1565,12 @@ Triggered by a custom macOS Quick Action with keybinding."
   :ensure t
   :mode ("\\.epub\\'" . nov-mode))
 
-(use-package olivetti)
+(use-package olivetti
+  :ensure t
+  :custom
+  (olivetti-body-width 60)
+  ;; (olivetti-style 'fancy)
+  )
 
 (use-package pdf-tools
 
@@ -1221,6 +1585,9 @@ Triggered by a custom macOS Quick Action with keybinding."
   ;; (pdf-tools-install :no-query)
   ;; open pdfs scaled to fit page
   (setq-default pdf-view-display-size 'fit-width))
+
+(use-package typo
+  :commands typo-mode)
 
 (use-package typst-ts-mode
   ;; https://codeberg.org/meow_king/typst-ts-mode
@@ -1245,33 +1612,8 @@ Triggered by a custom macOS Quick Action with keybinding."
   (setq typst-preview-browser "xwidget")
   (define-key typst-preview-mode-map (kbd "C-c C-j") 'typst-preview-send-position))
 
-;;; Dired
-(use-package dired
-  :ensure nil
-  :custom
-  (delete-by-moving-to-trash t)
-  (dired-dwim-target t)
-  (load-prefer-newer t))
-
-(use-package dired-aux
-  :ensure nil
-  :after dired)
-
-(use-package dired-x
-  :ensure nil
-  :disabled
-  :after dired-aux
-  :hook
-  (dired-mode . dired-omit-mode)
-  :custom
-  (dired-omit-extensions ".DS_Store")
-  (dired-find-subdir t))
-
-(use-package dired-plus
-  :ensure t
-  :disabled
-  :after dired-x)
 
 (provide 'init)
 
 ;;; init.el ends here
+(put 'dired-find-alternate-file 'disabled nil)

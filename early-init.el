@@ -31,7 +31,7 @@
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 (setopt inhibit-startup-message t)
-(setopt initial-scratch-message nil)
+;; (setopt initial-scratch-message nil)
 
 (when (featurep 'native-compile)
   (setopt native-comp-async-report-warnings-errors nil)
